@@ -1,0 +1,697 @@
+  /* -------------------- Base Styles -------------------- */
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-top: 80px;
+    background-color: #fff;
+  }
+
+  /* -------------------- Layout Container -------------------- */
+  /* Custom Scrollbar for the container */
+  .custom-container {
+    width: 100%;
+    max-width: 1800px;
+    margin: 30px auto;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    gap: 4rem;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+    transition: opacity 0.8s ease;
+    overflow-x: hidden;
+    overflow-y: auto; /* enable vertical scrolling */
+    
+    /* Optional: hide default scrollbar in Firefox and Edge */
+    scrollbar-width: thin;
+    scrollbar-color: #b30000 #f1f1f1;
+  }
+
+  /* Webkit Custom Scrollbar */
+  .custom-container::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .custom-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 20px; /* match container */
+    margin: 4px 0;       /* space from edges */
+  }
+
+  .custom-container::-webkit-scrollbar-thumb {
+    background: #b30000;
+    border-radius: 20px;  /* fully rounded */
+    border: 2px solid #f1f1f1; /* gives padding effect */
+  }
+
+  .custom-container::-webkit-scrollbar-thumb:hover {
+    background: #ff4d4d;
+  }
+
+
+
+  /* -------------------- Left Panel -------------------- */
+  .left-panel {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 30px;
+    padding-right: 0;
+    justify-items: center;
+    align-items: start;
+  }
+
+  .left-panel .card {
+    color: white;
+    width: 300px;
+    height: 320px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Unique colors for each card - medium bold, balanced */
+  .left-panel .card.volunteers {
+      background-color: #17a589; /* medium teal */
+  }
+
+  .left-panel .card.new-event {
+      background-color: #2874a6; /* medium blue */
+  }
+
+  .left-panel .card.manage-events {
+      background-color: #d35400; /* warm medium orange */
+  }
+
+  .left-panel .card.volunteer-import {
+      background-color: #c0392b; /* medium red */
+  }
+
+  /* Hover effects - slightly brighter for emphasis */
+  .left-panel .card.volunteers:hover {
+      background-color: #1abc9c; /* slightly brighter teal */
+  }
+
+  .left-panel .card.new-event:hover {
+      background-color: #3498db; /* slightly brighter blue */
+  }
+
+  .left-panel .card.manage-events:hover {
+      background-color: #e67e22; /* slightly brighter orange */
+  }
+
+  .left-panel .card.volunteer-import:hover {
+      background-color: #e74c3c; /* slightly brighter red */
+  }
+
+  /* Hover effects for all cards */
+  .left-panel .card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    outline: 2px solid #d42828;  /* red accent outline */
+    outline-offset: 4px;         
+  }
+
+  /* Smooth image/icon scale on hover */
+  .left-panel .card:hover img {
+    transform: scale(1.1);
+    transition: transform 0.3s ease;
+  }
+
+  /* Icon tilt + scale effect */
+  .left-panel .card:hover i {
+    transform: scale(1.1) rotate(-8deg);
+    transition: transform 0.3s ease;
+  }
+
+  /* Icon and text styles */
+  .left-panel .card i {
+    font-size: 6rem;
+    margin-bottom: 1rem;
+    transition: transform 0.3s ease;
+  }
+
+  .left-panel .card span,
+  .left-panel .card h3,
+  .left-panel .card p {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+  }
+  
+  /* Section Titles */
+ .section-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #b30000;
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    /* Smooth movement transition */
+    transition: transform 0.3s ease;
+  }
+
+  /* Icon smooth transition */
+  .section-title i {
+    display: inline-block; /* needed for transform */
+    transition: transform 0.3s ease;
+  }
+
+  /* When the h1 is hovered, move it slightly */
+  .section-title:hover {
+    transform: translateX(5px); /* moves the title 5px to the right */
+  }
+
+  /* Tilt the icon when parent h1 is hovered */
+  .section-title:hover i {
+    transform: rotate(-10deg) scale(1.1); /* tilt + scale icon */
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 3px solid #b30000;
+    width: 100%;
+    margin: 0;
+  }
+
+  /* When hovering any part of the event-section, move the title and tilt icon */
+  .event-section:hover .section-title {
+    transform: translateX(5px);
+  }
+
+  .event-section:hover .section-title i {
+    transform: rotate(-10deg) scale(1.1);
+  }
+
+  /* Right Panel */
+  .right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    max-height: 750px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Event Sections */
+  .event-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Event Section Inner */
+  .event-section-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    max-height: calc(2 * 120px + 15px);
+    overflow-y: auto;  /* allow scrolling if more than 2 cards */
+    overflow-x: hidden;
+
+    padding: 10px;
+    margin: 0;
+    position: relative;
+
+    background: #fff;
+    border-radius: 12px;
+    box-shadow:
+      0 4px 10px rgba(0,0,0,0.1),
+      0 8px 20px rgba(0,0,0,0.15),
+      0 12px 32px rgba(0,0,0,0.2);
+
+    scrollbar-width: thin;
+    scrollbar-color: #b30000 #f1f1f1;
+  }
+
+  /* Custom Scrollbar */
+  .event-section-inner::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .event-section-inner::-webkit-scrollbar-track {
+    background: #f1f1f1;  
+    border-radius: 12px;         /* matches card rounding */
+    margin: 4px;                  /* inset from edges for smooth blend */
+  }
+
+  .event-section-inner::-webkit-scrollbar-thumb {
+    background: #b30000;
+    border-radius: 12px;          /* fully rounded thumb */
+  }
+
+  .event-section-inner::-webkit-scrollbar-thumb:hover {
+    background: #ff5a5a;
+  }
+
+
+
+  /* Event Card */
+  .event-card {
+    flex: 0 0 auto;           /* don’t shrink */
+    overflow: hidden;          /* clip content to maintain border radius */
+
+    background: #fff;
+    border-radius: 12px;    
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+
+    /* Smooth transition for transform and shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    /* Make it “float above” */
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Hover effect: lift above the scrollable parent */
+  .event-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    z-index: 00; /* above parent and siblings */
+    outline: 1px solid #ff5a5a;  /* red accent outline */
+    outline-offset: 4px;          /* spacing between card and outline */
+  }
+
+
+  /* Optional: smooth layering fix using pseudo */
+  .event-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* Event Header */
+  .event-header {
+    background: #b30000;
+    color: #fff;
+    padding: 12px 16px;
+  }
+
+  .event-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+
+  /* Event Details - single row flex layout */
+  .event-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 16px;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  /* Each detail item */
+  .event-details p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+
+  /* Icons */
+  .event-details i {
+    color: #b30000;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  /* Detail button inline */
+  .detail-link {
+    background-color: #b30000; /* primary dark red */
+    color: #fff;
+    font-weight: bold;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    flex: 0 0 auto; /* don't stretch */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2); /* subtle depth */
+  }
+
+ .detail-link:hover {
+    background-color: #8a0000; /* darker red for smooth hover */
+    transform: scale(1.05);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35); /* lift effect */
+    outline: 2px solid #ff4d4d;  /* red accent outline */
+    outline-offset: 2px;
+  }
+
+
+   /* No Events Placeholder */
+  .no-events {
+    color: #888;
+    text-align: center;
+    padding: 20px;
+    font-style: italic;
+    min-height: 200px;    /* ensures some vertical space */
+    max-height: 400px;    /* optional, prevents it from being too tall */
+    display: flex;
+    align-items: center;  /* vertically center the text */
+    justify-content: center; /* horizontally center */
+    border-radius: 8px;   /* optional: mimic card style */
+  }
+
+
+
+  /* -------------------- Adaptive below 1400px -------------------- */
+  @media (max-width: 1400px) {
+    .custom-container {
+      gap: 1.2rem; /* slightly smaller gap between panels */
+      max-width: 95%;
+      max-height: 95vh;
+      display: flex;
+      align-items: stretch;
+    }
+
+    /* Left Panel */
+  .left-panel {
+      margin-top: 50px; /* ✅ now works properly */
+      flex: 0 0 230px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 12px 10px;
+      height: 100%;
+      max-height: 95vh;
+    }
+    .left-panel .card {
+      flex: 1;
+      width: 100%;
+      min-height: 160px; /* shorter cards */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem;
+    }
+
+    .left-panel .card i {
+      font-size: 2.8rem; /* smaller icons */
+    }
+
+    .left-panel .card span,
+    .left-panel .card h3,
+    .left-panel .card p {
+      font-size: 1rem;
+    }
+
+    .card img {
+      max-width: 120px;
+    }
+    
+
+    /* Right Panel */
+    .right-panel {
+      flex: 1;
+      height: 100%;
+      min-height: 600px;
+      max-height: 95vh;
+      padding: 0.8rem 1rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      overflow-y: auto;
+    }
+
+    .right-panel h1 {
+      font-size: 1.5rem;
+    }
+  }
+  /* -------------------- Below 1100px -------------------- */
+  @media (max-width: 1100px) {
+    .custom-container {
+      flex-wrap: wrap;
+      justify-content: center;
+      max-height: none;
+      gap: 1rem;
+    }
+
+    .left-panel {
+      flex: 0 0 200px;
+      padding: 12px;
+      gap: 0.8rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .left-panel .card {
+      min-height: 140px;
+      width: 100%;
+    }
+
+    .left-panel .card i {
+      font-size: 2.4rem;
+    }
+
+    .left-panel .card span,
+    .left-panel .card h3,
+    .left-panel .card p {
+      font-size: 0.95rem;
+    }
+
+    .card img {
+      max-width: 120px;
+    }
+
+    .right-panel {
+      width: 100%;
+      max-height: 75vh;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
+
+    .right-panel h1 {
+      font-size: 1.3rem;
+    }
+  }
+
+  /* -------------------- Below 900px -------------------- */
+@media (max-width: 900px) {
+  .custom-container {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 10px;
+  }
+
+  /* Left Panel */
+  .left-panel {
+    flex: 1 1 100%;
+    grid-template-columns: 1fr 1fr;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .left-panel .card {
+    min-height: 120px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
+  }
+
+  .left-panel .card i {
+    font-size: 2rem;
+  }
+
+  .left-panel .card span,
+  .left-panel .card h3,
+  .left-panel .card p {
+    font-size: 0.9rem;
+  }
+
+  /* Right Panel */
+  .right-panel {
+    width: 100%;
+    max-height: 70vh;
+    padding: 0.8rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .right-panel h1 {
+    font-size: 1.2rem;
+  }
+
+  /* Event Section */
+  .event-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+  }
+
+  .event-section-inner {
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  /* Event Box / Table Layout */
+  .event-box {
+    display: block;
+    max-height: 50vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    margin-bottom: 1rem;
+    background: #fff;
+    -webkit-overflow-scrolling: touch;
+    position: relative; /* allows sticky children */
+  }
+
+  /* Sticky Event Header */
+  .event-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #B2000C;
+    color: #fff;
+    padding: 12px 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  .event-header h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Event Card */
+  .event-card {
+    width: 100%;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .event td,
+  .event th {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  /* Detail Link */
+  .detail-link {
+    display: inline-block;
+    text-align: center;
+    padding: 6px 10px;
+    margin: 4px auto;
+    font-size: 0.85rem;
+  }
+
+  .detail-box i {
+    font-size: 0.9rem;
+    margin-right: 4px;
+  }
+}
+
+/* -------------------- Below 700px -------------------- */
+@media (max-width: 700px) {
+  .left-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .left-panel .card {
+    min-height: 100px;
+    padding: 0.5rem;
+  }
+
+  .left-panel .card i {
+    font-size: 1.8rem;
+  }
+
+  .left-panel .card span,
+  .left-panel .card h3,
+  .left-panel .card p {
+    font-size: 0.85rem;
+  }
+
+  .custom-container {
+    margin-top: 1rem;
+  }
+
+  .right-panel {
+    max-height: 65vh;
+    padding: 0.5rem;
+  }
+
+  .right-panel h1 {
+    font-size: 1rem;
+  }
+
+  .event-section {
+    padding: 0.5rem 0;
+  }
+
+  .event-box {
+    max-height: 50vh;
+  }
+
+  .detail-link {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+}
+
+/* -------------------- Below 600px -------------------- */
+@media (max-width: 600px) {
+  html, body {
+    margin: 0;
+    padding: 0 10px;
+    overflow-x: auto;
+  }
+
+  .custom-container {
+    margin-top: 110px; /* space for fixed top header */
+  }
+
+  .event-box {
+    max-height: 45vh;
+  }
+
+  .event td,
+  .event th {
+    padding: 5px 8px;
+    font-size: 0.85rem;
+  }
+}
