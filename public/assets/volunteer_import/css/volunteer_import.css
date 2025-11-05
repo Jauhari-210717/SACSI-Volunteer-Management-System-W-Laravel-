@@ -4,64 +4,80 @@
   padding: 0;
   box-sizing: border-box;
 }
-
-html {
-  scroll-snap-type: y mandatory;
-  scroll-behavior: smooth;
-}
-
-body {
+html, body {
+  height: 100%;
   margin: 0;
-  min-height: 100vh; 
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding-top: 60px;
-  display: flex;
-  flex-direction: column;
+  padding: 0;
+  overflow: hidden; /* hide body scrollbar */
 }
 
+/* External fixed header assumed at 80px height */
+.scroll-container {
+  position: absolute;
+  top: 65px;       /* below header */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;       /* enable scrolling */
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  max-height: 90vh;
+}
+
+/* Sections inside scroll container */
 section {
-  height: auto;
-  overflow-y: visible;
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  position: relative;
-  overflow-x: hidden;
-  padding: 1rem 0;
+  box-sizing: border-box;
+  padding-top: 1rem;
+}
+
+/* Sections inside scroll container */
+section {
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  overflow: visible;   /* do NOT scroll individually */
 }
 
 
-
-#handling-Section, #import-Section, #importlog-Section{
-  display: block;
-  opacity: 1;
-  visibility: visible;
-  overflow-y: auto;    /* scroll inside if content exceeds 1650px */  
+#handling-Section,
+#import-Section,
+#importlog-Section {
+  overflow-y: auto;  /* scroll inside section if content is long */
 }
 
 
 /* --- Section Titles with Icons --- */
+/* Default section title */
 .section-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #c41e3a;
-  font-size: 1.8rem;
-  font-weight: 600;
-  margin: 0 0 8px 0; /* remove top margin, small space below */
-  padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #c41e3a;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    padding: 0;
+    transition: transform 0.25s ease, text-shadow 0.25s ease;
 }
 
 .section-title i {
-  color: #e6202e;
-  font-size: 1.8rem;
+    color: #e6202e;
+    transition: transform 0.25s ease, text-shadow 0.25s ease;
 }
 
-/* Optional: subtle hover effect */
-.section-title:hover i {
-  transform: scale(1.1);
-  text-shadow: 0 0 10px rgba(230, 32, 46, 0.6);
+/* Active/current section scales up automatically */
+.section-title.active {
+    transform: scale(1.05);
+    text-shadow: 0 0 10px rgba(230, 32, 46, 0.6);
+}
+
+.section-title.active i {
+    transform: scale(1.15);
 }
 
 .header-controls {
@@ -164,11 +180,11 @@ section {
   flex: 1 1 180px;
   min-width: 0;
   max-width: 220px;
-  padding: 0.5rem;
   border: 1px solid #ced4da !important; /* force the color */
   border-radius: 4px;
   background-color: #fff; /* optional: ensures it doesn’t inherit dark background */
   color: #000; /* text color */
+  padding: 5px;
 }
 
 .uploader-info input:focus {
@@ -180,10 +196,9 @@ section {
   box-shadow: none;
 }
 
-
 /* Import Button */
 .import-btn {
-  padding: 0.5rem 1rem;
+  padding: 0;
   border-radius: 4px;
   background-color: #e9ecef;
   color: #333;
@@ -192,6 +207,13 @@ section {
   font-size: 0.9rem;
   white-space: nowrap;
   flex-shrink: 0;
+}
+/* Container for Edit + Hidden Actions */
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap; /* wrap if too many buttons */
 }
 
 /* Edit Table Button */
@@ -203,39 +225,30 @@ section {
   font-weight: 500;
   border-radius: 6px;
   max-width: 140px;
-  margin-bottom: 5px;
-  border: 12px solid #ec3535;
+  margin-bottom: 0; /* remove extra spacing */
+  border: 2px solid #ec3535; /* reduced border width */
   background-color: transparent;
   color: #495057;
   cursor: pointer;
-  transition: all 0.25s ease, transform 0.25s ease; /* smooth scaling */
+  transition: all 0.25s ease, transform 0.25s ease;
 }
 
-/* Grow slightly on hover */
-.toggle-edit-btn:hover {
-  border-color: #b2000c; /* optional highlight on hover */
-  color: #b2000c;        /* optional text color change */
-}
-
-/* Active state (clicked) */
+/* Hover & Active */
+.toggle-edit-btn:hover,
 .toggle-edit-btn.active {
   border-color: #b2000c;
   color: #b2000c;
-  background-color: #f8f9fa; /* subtle background for highlight */
+  background-color: #f8f9fa;
 }
-
 
 /* Icon inside button */
 .toggle-edit-btn i {
-    font-size: 1rem;
-    transition: transform 0.2s ease, color 0.2s ease;
+  font-size: 1rem;
+  transition: transform 0.2s ease, color 0.2s ease;
 }
-
-/* Rotate icon slightly when hovered or active */
 .toggle-edit-btn:hover i,
 .toggle-edit-btn.active i {
   transform: rotate(10deg);
-  color: #fcfcfc;
 }
 
 /* Hidden Actions Container */
@@ -243,12 +256,10 @@ section {
   display: none;
   gap: 0.5rem;
   align-items: center;  
-  flex-wrap: wrap;
   transition: all 0.3s ease;
-  border-radius: 6px;
 }
 
-/* Show hidden actions (buttons only get colored) */
+/* Show hidden actions when toggled */
 .hidden-actions.visible {
   display: flex;
 }
@@ -257,18 +268,18 @@ section {
 .hidden-actions .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.9rem;
+  gap: 0.6rem;
+  
   font-size: 0.875rem;
   font-weight: 500;
   border-radius: 6px;
   transition: all 0.25s ease;
   cursor: pointer;
-  color: #212529; /* dark text for readability */
-  background-color: transparent; /* default transparent */
+  color: #212529;
+  background-color: transparent;
 }
 
-/* Specific button colors inside hidden-actions */
+/* Specific button colors */
 .hidden-actions .select-all-btn {
   border-color: #007bff !important;
   color: #007bff !important;
@@ -296,6 +307,7 @@ section {
   color: #fff !important;
 }
 
+
 /* Action Buttons (far right) */
 .action-buttons {
   display: flex;
@@ -316,49 +328,6 @@ section {
   color: #333;
   cursor: pointer;
   font-size: 0.9rem;
-}
-
-/* ✅ Responsive Fix for <= 600px */
-@media (max-width: 600px) {
-  .import-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
-
-  .file-upload,
-  .uploader-info {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .file-path,
-  .uploader-info input {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  /* Move Instructions below, aligned right */
-  .action-buttons {
-    width: 100%;
-    justify-content: flex-end;
-    margin-left: 0;
-    margin-top: 0.25rem;
-  }
-}
-
-/* ✅ Extra Small Screens (≤400px) */
-@media (max-width: 400px) {
-  .file-upload,
-  .uploader-info {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .action-buttons {
-    justify-content: flex-end;
-  }
 }
 
 /* Action Message */
@@ -389,23 +358,156 @@ section {
   min-height: 0;
   color: #000;
 }
+/* =======================
+   Volunteer Table - Improved
+======================= */
 
-/* Table Responsive Wrapper */
+.volunteer-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.95rem;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.volunteer-table thead {
+    position: sticky;
+    top: 0;
+    background-color: #f8f9fa;
+    z-index: 10;
+    box-shadow: inset 0 -1px 0 #e0e0e0;
+}
+
+.volunteer-table th,
+.volunteer-table td {
+    padding: 0.75rem 0.8rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.volunteer-table th {
+    font-weight: 600;
+    color: #555;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    background-color: #f8f9fa;
+}
+
+.volunteer-table tbody tr {
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    cursor: default;
+}
+
+.volunteer-table tbody tr:hover {
+    background-color: #f1f3f5;
+    transform: scale(1.001);
+}
+
+/* Checkbox Column */
+table th:first-child,
+table td:first-child {
+    width: 50px;
+    text-align: center;
+}
+
+.select-all-invalid,
+.volunteer-table input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    accent-color: #c41e3a;
+    cursor: pointer;
+}
+
+/* Action Buttons Column */
+table th:last-child,
+table td:last-child {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.volunteer-table td:last-child {
+    padding: 0.4rem 0.6rem;
+}
+
+.volunteer-table td:last-child .btn-sm {
+    margin: 0;
+    padding: 0.3rem 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+}
+
+.volunteer-table td:last-child .btn-sm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Invalid / Missing Data Styling */
+.volunteer-table td p.text-danger {
+    font-weight: 600;
+    margin: 0;
+    color: #d9534f;
+}
+
+/* Table Controls */
+.table-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+}
+
+.table-controls h3 {
+    color: #c41e3a;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Table Actions */
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.table-actions button {
+    padding: 0.35rem 0.9rem;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    color: #333;
+    cursor: pointer;
+    font-size: 0.85rem;
+    background-color: #fff;
+    transition: all 0.2s ease;
+}
+
+.table-actions button:hover {
+    background-color: #f8f9fa;
+    border-color: #c41e3a;
+    color: #c41e3a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* Responsive Scrollbar */
 .table-responsive {
-  margin-top: 10px;
-  position: relative;
-  width: 100%;
-  max-height: 350px;
-  overflow-y: auto; /* vertical scroll */
-  overflow-x: auto; /* horizontal scroll if needed */
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: #ced4da #f1f1f1;
+    max-height: 450px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    background-color: #fff;
+    scrollbar-width: thin;
+    scrollbar-color: #ced4da #f1f1f1;
 }
 
 .table-responsive::-webkit-scrollbar {
     width: 8px;
-    height: 8px;
 }
 
 .table-responsive::-webkit-scrollbar-track {
@@ -421,287 +523,41 @@ section {
 .table-responsive::-webkit-scrollbar-thumb:hover {
     background: #adb5bd;
 }
-
-/* Volunteer Table */
-.volunteer-table {
-    width: 100%;
-    min-width: 100%;
-    border-collapse: collapse; /* ensures single lines */
-    font-size: 1rem;
-    background-color: #fff;
-}
-
-/* Table Header */
-.volunteer-table thead {
-    position: sticky;
-    top: 0;
-    background: #fff;
-    z-index: 10;
-}
-
-.volunteer-table thead th {
-    background-color: #f8f9fa;
-    color: #666;
-    font-weight: 600;
-    padding: 0.75rem;
-    text-align: left;
-    border: 1px solid #e9ecef; /* full header border */
-}
-
-/* Table Body Cells */
-.volunteer-table td {
-    padding: 0.75rem;
-    border: 1px solid #e9ecef; /* full cell borders */
-    vertical-align: top;
-}
-
-/* Hover Effect */
-.volunteer-table tbody tr:hover {
-    background-color: #f1f3f5;
-}
-
-/* Checkboxes */
-.select-all-checkbox,
-.volunteer-table input[type="checkbox"] {
-    accent-color: #c00;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-/* Table Controls */
-.table-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.table-controls h3 {
-    color: #c41e3a;
-    font-size: 1.4rem;
-    font-weight: 600;
-}
-
-.table-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.table-actions button {
-    padding: 0.3rem 0.8rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    color: #333;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-
-
-/* Volunteer Table Base */
-.volunteer-table {
-    width: 100%;
-    border-collapse: collapse; /* single border lines */
-    font-size: 1rem;
-    background-color: #fff;
-}
-
-/* Table Header */
-.volunteer-table thead {
-    position: sticky;
-    top: 0;
-    background: #f8f9fa;
-    z-index: 10;
-}
-
-.volunteer-table th {
-    padding: 0.75rem;
-    text-align: left;
-    font-weight: 600;
-    color: #666;
-    border: 1px solid #e9ecef; /* full borders for header */
-}
-
-/* Table Body Cells */
-.volunteer-table td {
-    padding: 0.75rem;
-    border: 1px solid #e9ecef; /* full borders for all cells */
-    vertical-align: top;
-    overflow: visible !important;
-}
-
-/* Remove extra padding and align button in center */
-.volunteer-table td:last-child {
-    padding: 0.25rem 0.5rem; /* smaller padding for action buttons */
-    text-align: center;       /* center the button horizontally */
-    white-space: nowrap;      /* prevent wrapping */
-}
-
-/* Ensure buttons are inline-flex and no extra margin */
-.volunteer-table td:last-child .btn-sm {
-    margin: 0;                /* remove default margin */
-    padding: 0.25rem 0.5rem;  /* optional: adjust button padding */
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-/* Hover Effect for Rows */
-.volunteer-table tbody tr:hover {
-    background-color: #f1f3f5; /* subtle hover */
-}
-
-/* Checkboxes */
-.select-all-checkbox,
-.volunteer-table input[type="checkbox"] {
-    accent-color: #c00; /* red checkmark */
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-/* Fix alignment for checkbox and action header */
-table th:first-child,
-table td:first-child {
-  text-align: center;
-  vertical-align: middle;
-  width: 40px; /* keeps checkbox column narrow but consistent */
-}
-
-table th:last-child,
-table td:last-child {
-  text-align: center;
-  vertical-align: middle;
-  white-space: nowrap; /* prevents action buttons from wrapping */
-}
-
-
-/* Table Controls */
-.table-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.table-controls h3 {
-    color: #c41e3a;
-    font-size: 1.4rem;
-    font-weight: 600;
-}
-
-.table-actions {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.table-actions button {
-    padding: 0.3rem 0.8rem;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    color: #333;
-    cursor: pointer;
-    font-size: 0.8rem;
-}
-
-/* Small outline button */
-.btn-sm {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;           /* space between icon and text */
-    padding: 0.35rem 0.75rem;
-    font-size: 0.875rem;   /* slightly smaller text */
-    font-weight: 500;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    background-color: transparent;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.25s ease;
-}
-
-/* Hover effect */
-.btn-sm:hover {
-    background-color: #f8f9fa;
-    border-color: #b2000c;
-    color: #b2000c;
-}
-
-/* Icon inside button */
-.btn-sm i {
-    font-size: 0.9rem;     /* slightly smaller icon */
-    transition: transform 0.2s ease, color 0.2s ease;
-}
-
-/* Rotate icon slightly on hover */
-.btn-sm:hover i {
-    transform: rotate(10deg);
-    color: #b2000c;
-}
-
-/* Edit Import Log Modal */
-.edit-import-log-modal {
-    position: fixed;
-    inset: 0;
+/* Hide checkboxes in the first column by default */
+.volunteer-table tbody td:first-child input[type="checkbox"],
+.volunteer-table thead th:first-child input[type="checkbox"] {
     display: none;
-    z-index: 9999;
-    font-family: 'Segoe UI', Roboto, sans-serif;
 }
 
-.edit-import-log-modal .modal-overlay {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.55);
+/* Show checkboxes when container has edit-mode */
+.data-table-container.edit-mode .volunteer-table tbody td:first-child input[type="checkbox"],
+.data-table-container.edit-mode .volunteer-table thead th:first-child input[type="checkbox"] {
+    display: inline-block; /* or 'initial' if you prefer */
 }
 
-.edit-import-log-modal .modal-content {
-    background: #fff;
-    border-radius: 16px;
-    width: 90%;
-    max-width: 650px;
-    padding: 2rem;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-    text-align: center;
-    animation: slideIn 0.3s ease forwards;
+/* =======================
+   Responsive
+======================= */
+@media (max-width: 768px) {
+    .volunteer-table th,
+    .volunteer-table td {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
 }
 
-/* Small outline buttons inside Import Log Modal */
-.edit-import-log-modal .btn-sm {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;           /* space between icon and text */
-    padding: 0.35rem 0.75rem;
-    font-size: 0.875rem;   /* slightly smaller text */
-    font-weight: 500;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    background-color: transparent;
-    color: #333;
-    cursor: pointer;
-    transition: all 0.25s ease;
+@media (max-width: 500px) {
+    .table-responsive {
+        max-height: 250px;
+    }
+    
+    .volunteer-table th,
+    .volunteer-table td {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.5rem;
+    }
 }
 
-/* Hover effect */
-.edit-import-log-modal .btn-sm:hover {
-    background-color: #f8f9fa;
-    border-color: #b2000c;
-    color: #b2000c;
-}
-
-/* Icon inside button */
-.edit-import-log-modal .btn-sm i {
-    font-size: 0.9rem;
-    transition: transform 0.2s ease, color 0.2s ease;
-}
-
-/* Rotate icon slightly on hover */
-.edit-import-log-modal .btn-sm:hover i {
-    transform: rotate(10deg);
-    color: #b2000c;
-}
 
 /* Submit Section */
 .submit-section {
@@ -746,134 +602,168 @@ table td:last-child {
   outline: 3px solid #ffd43b; /* gold/yellow */
   outline-offset: 3px;
 }
-
-/* ---------- Date-Time Input Custom Style ---------- */
-.datetime-input::-webkit-calendar-picker-indicator {
-  filter: invert(24%) sepia(95%) saturate(6805%) hue-rotate(348deg) brightness(95%) contrast(101%);
-  cursor: pointer;
-}
-
-.datetime-input {
-  color: #333;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 0.45rem 0.75rem 0.45rem 2.2rem; /* space for icon */
-  font-size: 1rem;
-}
-
-/* Sidebar active glow for icons */
-.active-glow {
-  color: #e6202e !important;
-  text-shadow: 0 0 8px rgba(230, 32, 46, 0.7),
-               0 0 16px rgba(230, 32, 46, 0.4);
-  transition: color 0.25s ease, text-shadow 0.25s ease;
-}
-
-  /* ---- Modal Wrapper ---- */
-.modal-wrapper {
-  position: fixed;
-  inset: 0;
-  display: none;
-  z-index: 2147483646;
-  pointer-events: auto;
-}
-
-/* ---- Overlay ---- */
-.modal-wrapper .modal-overlay {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.55);
-  opacity: 0;
-  animation: fadeIn 0.25s ease forwards;
-}
-
-/* ---- Show State ---- */
-.modal-wrapper.is-open {
-  display: block;
-}
-
-/* ---- Modal Content ---- */
-.modal-wrapper .modal-content {
-  background: #fff;
-  padding: 2rem 2.5rem;
-  border-radius: 16px;
-  max-width: 450px;
-  width: 90%;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.35);
-  text-align: center;
-  font-family: 'Segoe UI', Roboto, sans-serif;
-}
-
-/* ---- Modal Header with Icon ---- */
-.modal-content h2 {
-  font-size: 1.8rem;
-  color: #B2000C;
-  font-weight: 700;
-  display: flex;
-  align-items: center;   /* vertical alignment of icon + text */
-  justify-content: center;
-  gap: 0.5rem;           /* space between icon and text */
-  margin-bottom: 1.5rem; /* space between H2 and paragraph */
-}
-
-.warning-icon {
-  font-size: 2rem;
-}
-
-/* ---- Modal Paragraph ---- */
-.modal-body-text {
-  font-size: 1.1rem;
-  color: #333;
-  font-weight: 600;
-  margin-bottom: 2rem;
-  line-height: 1.5;
-}
-
-/* ---- Modal Buttons ---- */
-.modal-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
-.modal-btn {
-  padding: 0.7rem 1.8rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: all 0.25s ease;
-}
-/* Confirm (Primary) */
-.modal-btn.confirm {
-  background-color: #B2000C;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(178,0,12,0.3);
-}
-.modal-btn.confirm:hover {
-  background-color: #8f000a;
-  transform: translateY(-2px);
-}
-/* Cancel (Secondary) */
-.modal-btn.cancel {
-  background-color: #e5e5e5;
-  color: #333;
-}
-.modal-btn.cancel:hover {
-  background-color: #d0d0d0;
-  transform: translateY(-2px);
-}
-
-/* Responsive adjustments */
+/* --------- Tablets (≤768px) --------- */
 @media (max-width: 768px) {
+
+  section {
+    height: calc(100vh - 70px);
+    min-height: calc(100vh - 70px);
+    max-height: calc(100vh - 70px);
+  }
+
+  .scroll-container {
+    height: calc(100vh - 70px);
+    margin-top: 0;
+  }
+
+  .database-main {
+    padding: 0.8rem;
+  }
+
+  .import-section {
+    padding: 1rem;
+    margin: 0.5rem 0;
+  }
+
+  .import-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+
+  /* Reset/Clear Imports form/button */
+  .import-controls form {
+      width: 100%;
+      display: flex;
+      justify-content: flex-start;
+  }
+
+  .import-controls form .import-btn {
+      width: 100%;
+      text-align: center;
+      padding: 0.6rem;
+      flex-shrink: 0;
+  }
+
+  .import-controls form + form {
+      margin-top: 0.5rem;
+  }
+
+  /* File upload adjustments */
+  .file-upload .input-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  #file-upload-button {
+    flex-shrink: 0;
+  }
+
+  .file-path {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    background: #fff;
+    font-size: 0.9rem;
+    color: #495057;
+  }
+
+  .file-path.active,
+  .file-path.imported {
+    background-color: #d3d3d3;
+    color: #000;
+    border-color: #702626;
+    font-weight: 500;
+  }
+
+  /* Uploader input adjustments */
+  .uploader-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .uploader-info input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #000;
+    font-size: 0.9rem;
+    box-sizing: border-box;
+  }
+
+  .uploader-info input.active,
+  .uploader-info input.imported {
+    background-color: #d3d3d3;
+    color: #000;
+    border-color: #702626;
+    font-weight: 500;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+    margin-top: 0.25rem;
+  }
+
+  .action-buttons button {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .volunteer-table {
+    font-size: 0.8rem;
+  }
+
+  .volunteer-table th,
+  .volunteer-table td {
+    padding: 0.6rem 0.4rem;
+    white-space: nowrap;
+  }
+
+  .table-responsive {
+    border: none;
+    box-shadow: none;
+  }
+
+  .submit-section {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .submit-section button {
+    width: 100%;
+    padding: 0.6rem;
+  }
+
+  .action-message {
+    font-size: 0.8rem;
+    padding: 0.8rem;
+  }
+
+  .data-table-container {
+    min-height: 250px;
+  }
+
+  /* Modal adjustments */
   .modal-wrapper .modal-content {
-    max-width: 90%;       /* almost full width on tablets */
+    max-width: 90%;
     padding: 1.8rem;
     font-size: 1.25rem;
   }
@@ -889,168 +779,3 @@ table td:last-child {
     padding: 0.6rem 0;
   }
 }
-
-@media (max-width: 480px) {
-  .modal-wrapper .modal-content {
-    max-width: 95%;
-    padding: 1.5rem;
-    font-size: 1.1rem;
-  }
-
-  .modal-buttons {
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .modal-btn {
-    width: 100%;
-    font-size: 0.85rem;
-    padding: 0.5rem 0;
-  }
-}
-
-
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  body {
-      padding-top: 70px; /* Slightly more padding for mobile */
-  }
-  section {
-      height: calc(100vh - 70px);
-      min-height: calc(100vh - 70px);
-      max-height: calc(100vh - 70px);
-  }
-  .scroll-container {
-      height: calc(100vh - 70px);
-  }
-  .database-main {
-      padding: 0.8rem;
-  }
-  .import-section {
-      padding: 1rem;
-      margin: 0.5rem 0;
-  } 
-  .import-controls {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 0.8rem;
-  }
-  .file-path {
-      min-width: 100%;
-      width: 100%;
-  }
-  .action-buttons {
-      flex-wrap: wrap;
-      gap: 0.5rem;
-  }
-  .action-buttons button {
-      flex: 1;
-      min-width: 120px;
-  }
-  .volunteer-table {
-      font-size: 0.8rem;
-  }
-  .volunteer-table th,
-  .volunteer-table td {
-      padding: 0.6rem 0.4rem;
-      white-space: nowrap;
-  }
-  .table-responsive {
-      border: none;
-      box-shadow: none;
-  }
-  .submit-section {
-      flex-direction: column;
-      gap: 0.5rem;
-  }
-  .submit-section button {
-      width: 100%;
-      padding: 0.6rem;
-  }
-  .action-message {
-      font-size: 0.8rem;
-      padding: 0.8rem;
-  }
-  .data-table-container {
-      min-height: 250px; /* Minimum height for tables */
-  }
-}
-
-@media (max-width: 600px) {
-  body {
-      padding-top: 60px;
-  }
-  section {
-      height: calc(100vh - 60px);
-      min-height: calc(100vh - 60px);
-      max-height: calc(100vh - 60px);
-  }
-  .scroll-container {
-      height: calc(100vh - 60px);
-  }
-  
-  .database-main {
-      padding: 0.5rem;
-  }
-  .import-section {
-      padding: 0.8rem;
-  }
-  .import-controls {
-      gap: 0.5rem;
-  }
-  .volunteer-table {
-      min-width: 100%;
-      font-size: 0.7rem;
-  }
-  .volunteer-table th,
-  .volunteer-table td {
-      padding: 0.4rem 0.3rem;
-      min-width: 60px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-  }
-  .table-responsive {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-  }
-  .data-table-container {
-      max-height: calc(100vh - 250px);
-      min-height: 200px;
-  }
-  .table-controls h3 {
-      font-size: 1.1rem;
-  }
-  .submit-section button {
-      font-size: 0.8rem;
-  }
-  /* Horizontal scroll container for tables */
-  .table-scroll-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      max-width: 100%;
-  }
-  .volunteer-table {
-      width: auto;
-      min-width: 800px;
-      display: block;
-  }
-}
-
-/* Extra small devices */
-@media (max-width: 400px) {
-  .import-section h2 {
-      font-size: 1.2rem;
-  }
-  .submit-section {
-      gap: 0.3rem;
-  }
-  .volunteer-table td {
-      min-width: 50px;
-  }
-  .data-table-container {
-      min-height: 180px;
-  }
-}
-

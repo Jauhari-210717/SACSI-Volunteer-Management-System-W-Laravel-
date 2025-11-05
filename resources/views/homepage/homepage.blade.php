@@ -41,8 +41,12 @@
 
         {{-- Left Panel --}}
         <div class="left-panel">
-         <a href="{{ route('volunteer.import.index') }}" class="card volunteer-import" data-tooltip="Upload volunteer lists from external files."><i class="fa-solid fa-upload fa-3x"></i><span>Volunteer Import</span></a>
-
+<a href="{{ route('volunteer.import.index') }}" 
+   class="card volunteer-import" 
+   data-tooltip="Upload volunteer lists from external files.">
+   <i class="fa-solid fa-upload fa-3x"></i>
+   <span>Volunteer Import</span>
+</a>
 
 
 

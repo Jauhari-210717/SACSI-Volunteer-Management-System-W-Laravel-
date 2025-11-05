@@ -701,7 +701,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </header>
 
   {{-- Include both guide modals --}}
-  @include('layouts.modals.submit.logout_modal')
+  @include('layouts.modals.submit.authentication.logout_modal')
 
   <div id="sidebarMenu" class="sidebar">
     <!-- Sidebar Header -->
@@ -802,7 +802,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         @endif
     </div>
-</div>
+  </div>
 
 
 <script>

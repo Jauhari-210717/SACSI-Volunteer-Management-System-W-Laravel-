@@ -1,130 +1,174 @@
 <style>
-    .custom-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  display: none;
-  justify-content: center;
-  align-items: center;
-  z-index: 10000;
-  font-family: 'Segoe UI', Roboto, sans-serif;
-}
+  .custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+  }
 
-.custom-modal-overlay.active {
-  display: flex;
-  animation: fadeIn 0.25s ease;
-}
+  .custom-modal-overlay.active {
+    display: flex;
+    animation: fadeIn 0.25s ease;
+  }
 
-.custom-modal {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  width: 90%;
-  max-width: 450px;
-  text-align: center;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-  animation: slideIn 0.3s ease forwards;
-}
+  .custom-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    animation: slideIn 0.3s ease forwards;
+  }
 
-.custom-modal h3 {
-  color: #0d6efd; /* Bootstrap primary blue */
-  font-size: 1.4rem;
-  margin-bottom: 1rem;
-}
+  .custom-modal h3 {
+    color: #dc3545 !important; /* Red for danger */
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
 
-.custom-modal p {
-  color: #555;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-}
+  .custom-modal h3 i {
+    color: #dc3545 !important; /* Red icon */
+  }
 
-.modal-actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-}
+  .custom-modal p {
+    color: #555;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
 
-.modal-actions .btn {
-  padding: 0.6rem 1.4rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
+  .modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+  }
 
-.modal-actions .btn-primary {
-  background-color: #0d6efd;
-  color: #fff;
-}
+  .modal-actions .btn {
+    padding: 0.6rem 1.4rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
 
-.modal-actions .btn-primary:hover {
-  background-color: #0b5ed7;
-  transform: translateY(-2px);
-}
+  .modal-actions .btn-primary {
+    background-color: #dc3545 !important; /* Red primary */
+    color: #fff !important;
+  }
 
-.modal-actions .btn-secondary {
-  background-color: #e5e5e5;
-  color: #333;
-}
+  .modal-actions .btn-primary:hover {
+    background-color: #b2000c !important; /* Darker red */
+    transform: translateY(-2px);
+  }
 
-.modal-actions .btn-secondary:hover {
-  background-color: #d0d0d0;
-  transform: translateY(-2px);
-}
+  .modal-actions .btn-secondary {
+    background-color: #e5e5e5;
+    color: #333;
+  }
 
-/* Animations */
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-20px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
+  .modal-actions .btn-secondary:hover {
+    background-color: #d0d0d0;
+    transform: translateY(-2px);
+  }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+  /* Animations */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
 
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
 </style>
 
-{{-- Confirm Submit --}}
-<div id="modal1" class="custom-modal-overlay">
+{{-- Submit Verified Entries Modal --}}
+<div id="modalSubmit" class="custom-modal-overlay">
   <div class="custom-modal confirm-modal">
-    <h3><i class="fa-solid fa-database me-2 text-success"></i> Submit to Database</h3>
-    <p>Are you sure you want to submit verified entries to the database?</p>
+    <h3>
+      <i class="fa-solid fa-database"></i> Submit to Database
+    </h3>
+    <p id="modalSubmitCount">Are you sure you want to submit verified entries to the database?</p>
     <div class="modal-actions">
-      <button class="btn btn-danger" onclick="confirmAction('submit')">
+      <button type="button" class="btn btn-primary" id="confirmSubmitBtn">
         <i class="fa-solid fa-check"></i> Yes, Submit
       </button>
-      <button class="btn btn-secondary" onclick="closeModal('modal1')">
-        Cancel
+      <button type="button" class="btn btn-secondary" id="cancelSubmitBtn">
+        <i class="fa-solid fa-xmark"></i> Cancel
       </button>
     </div>
   </div>
 </div>
 
+{{-- Hidden form for submission --}}
+<form id="submitVerifiedForm" action="{{ route('volunteer.import.validateSave') }}" method="POST" style="display:none;">
+    @csrf
+</form>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('confirmSubmitModal');
-  const confirmBtn = document.getElementById('confirmSubmitBtn');
-  const cancelBtn = document.getElementById('cancelSubmitBtn');
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('modalSubmit');
+    const openModalBtn = document.getElementById('openSubmitModalBtn'); // updated button id
+    const confirmBtn = document.getElementById('confirmSubmitBtn');
+    const cancelBtn = document.getElementById('cancelSubmitBtn');
+    const hiddenForm = document.getElementById('submitVerifiedForm');
 
-  // Open modal
-  window.openConfirmModal = () => {
-    modal.classList.add('active');
-  };
+    // Open modal
+    openModalBtn.addEventListener('click', () => {
+        const checkboxes = document.querySelectorAll('#valid-entries-table tbody input[type="checkbox"]');
 
-  // Close modal
-  const closeModal = () => {
-    modal.classList.remove('active');
-  };
+        if (checkboxes.length === 0) {
+            alert('No verified entries to submit.');
+            return;
+        }
 
-  cancelBtn.addEventListener('click', closeModal);
+        // Check all checkboxes automatically (optional)
+        checkboxes.forEach(cb => cb.checked = true);
 
-  // Confirm action
-  confirmBtn.addEventListener('click', () => {
-    console.log('Submitting entries to database...');
-    closeModal();
-  });
+        // Update modal message with count
+        const count = checkboxes.length;
+        modal.querySelector('#modalSubmitCount').textContent = 
+            `Are you sure you want to submit ${count} verified entr${count > 1 ? 'ies' : 'y'} to the database?`;
+
+        modal.classList.add('active');
+    });
+
+    // Cancel submission
+    cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+    // Confirm submission
+    confirmBtn.addEventListener('click', () => {
+        // Clear previous inputs
+        hiddenForm.querySelectorAll('input[name="selected_valid[]"]').forEach(i => i.remove());
+
+        // Add selected checkboxes to hidden form
+        const selected = document.querySelectorAll('#valid-entries-table tbody input[type="checkbox"]:checked');
+        selected.forEach(cb => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'selected_valid[]';
+            input.value = cb.value;
+            hiddenForm.appendChild(input);
+        });
+
+        // Submit form
+        hiddenForm.submit();
+
+        // Close modal
+        modal.classList.remove('active');
+    });
 });
-
 </script>
