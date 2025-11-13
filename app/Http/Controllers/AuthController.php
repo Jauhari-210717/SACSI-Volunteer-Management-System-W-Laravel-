@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\AdminAccount;
 use App\Models\AdminAuthenticateLog;
 use App\Models\FactLog;
+use App\Models\ImportLog;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -185,14 +186,16 @@ public function login(Request $request)
         $ip = $request->ip();
 
         if ($adminId) {
+            // 1️⃣ Log the admin logout in AdminAuthenticateLog
             AdminAuthenticateLog::create([
-                'admin_id' => $adminId,
+                'admin_id'   => $adminId,
                 'ip_address' => $ip,
-                'status' => 'success',
-                'reason' => 'Logged out',
+                'status'     => 'success',
+                'reason'     => 'Logged out',
                 'login_time' => now(),
             ]);
 
+            // 2️⃣ Log fact
             $this->logFact(
                 $adminId,
                 'admin_accounts',
@@ -200,16 +203,39 @@ public function login(Request $request)
                 'logout',
                 'Admin logged out successfully'
             );
+
+            // 3️⃣ Mark any pending imports as Abandoned, preserve admin_id
+            ImportLog::where('admin_id', $adminId)
+                    ->where('status', 'Pending')
+                    ->update([
+                        'status'  => 'Abandoned',
+                        'admin_id'=> $adminId, // preserve who started the import
+                        'remarks' => "Admin ID: {$adminId} logged out before completing import."
+                    ]);
         }
 
+        // 4️⃣ Logout and invalidate session
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        session()->forget(['invalidEntries', 'validEntries', 'last_deleted_entries']);
+        // 5️⃣ Clear temporary import/session data
+        session()->forget([
+            'invalidEntries',
+            'validEntries',
+            'last_deleted_entries',
+            'uploaded_file_name',
+            'uploaded_file_path',
+            'csv_imported',
+            'import_log_id',
+            'lastUsedTable'
+        ]);
 
-        return redirect()->route('auth.login')->with('success', 'You have been logged out.');
+        return redirect()->route('auth.login')
+                        ->with('success', 'You have been logged out.');
     }
+
+
 
     /* ===========================
        HELPER: LOG TO FACT_LOGS

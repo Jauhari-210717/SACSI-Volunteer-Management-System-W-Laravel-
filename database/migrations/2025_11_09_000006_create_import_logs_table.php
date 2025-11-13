@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->integer('valid_count')->default(0);
                 $table->integer('invalid_count')->default(0);
                 $table->integer('duplicate_count')->default(0);
-                $table->enum('status', ['Pending','Completed','Cancelled','Reset','Failed'])->default('Pending');
+                $table->enum('status', ['Pending','Completed','Cancelled','Reset','Failed','Abandoned'])->default('Pending');
                 $table->text('remarks')->nullable();
                 $table->timestamps();
 

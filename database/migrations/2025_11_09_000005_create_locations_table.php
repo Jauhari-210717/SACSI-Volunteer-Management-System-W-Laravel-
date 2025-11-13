@@ -8,14 +8,20 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('locations')) {
-            Schema::create('locations', function (Blueprint $table) {
-                $table->increments('location_id');
-                $table->string('district', 100);
-                $table->string('barangay', 100);
-                $table->timestamps();
-            });
-        }
+        Schema::create('locations', function (Blueprint $table) {
+            $table->increments('location_id');
+            
+            // Only 1 or 2, representing the political district
+            $table->unsignedTinyInteger('district_id')->comment('1 = District 1, 2 = District 2');
+            
+            // East, West, North, South, or Poblacion
+            $table->string('zone_name', 50)->comment('Geographical zone name');
+            
+            // Barangay name
+            $table->string('barangay', 100);
+            
+            $table->timestamps();
+        });
     }
 
     public function down(): void

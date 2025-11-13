@@ -29,7 +29,7 @@ Route::prefix('volunteer-import')->group(function () {
     // Show Import (Invalid, Valid, Import Logs)
     Route::post('/preview', [VolunteerImportController::class, 'preview'])->name('volunteer.import.preview');
     
-    // Reset/Clear Import File
+    // Save Valid Volunteer to DB
     Route::post('/validate-save', [VolunteerImportController::class, 'validateAndSave'])->name('volunteer.import.validateSave');
 
     // Update Invalid/Valid Volunteer

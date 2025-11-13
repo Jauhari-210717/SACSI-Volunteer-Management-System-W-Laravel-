@@ -130,7 +130,7 @@
                                     <table id="invalid-entries-table" class="table table-hover volunteer-table">
                                         <thead>
                                             <tr>
-                                                <th><input type="checkbox" class="select-all-invalid"></th>
+                                                <th><input type="checkbox" class="select-all-invalid"></th> <!-- Invalid Table -->
                                                 <th>#</th> <!-- Row number -->
                                                 <th>Full Name</th>
                                                 <th>School ID</th>
@@ -330,7 +330,7 @@
                                     <table id="valid-entries-table" class="table table-hover volunteer-table">
                                         <thead>
                                             <tr>
-                                                <th><input type="checkbox" class="select-all-invalid"></th>
+                                                <th><input type="checkbox" class="select-all-valid"></th>   <!-- Valid Table -->
                                                 <th>#</th> <!-- Row number -->
                                                 <th>Full Name</th>
                                                 <th>School ID</th>
@@ -346,55 +346,55 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-    @if(!empty($validEntries) && count($validEntries) > 0)
-        @foreach ($validEntries as $index => $entry)
-            <tr>
-                <td><input type="checkbox" name="selected_valid[]" value="{{ $index }}"></td>
-                <td>{{ $index + 1 }}</td>
-                @php
-                    $columns = [
-                        'full_name' => 'Name',
-                        'id_number' => 'School ID',
-                        'course' => 'Course',
-                        'year_level' => 'Year',
-                        'contact_number' => 'Contact #',
-                        'email' => 'Email',
-                        'emergency_contact' => 'Emergency #',
-                        'fb_messenger' => 'FB/Messenger',
-                        'barangay' => 'Barangay',
-                        'district' => 'District',
-                    ];
-                @endphp
-                @foreach ($columns as $key => $label)
-                    <td>
-                        @if(empty($entry[$key]))
-                            <p class="text-danger fw-semibold">No {{ $label }}</p>
-                        @else
-                            {{ $entry[$key] }}
-                        @endif
-                    </td>
-                @endforeach
-                <td>
-                    <button type="button" class="btn btn-sm btn-outline-secondary"
-                            onclick="setLastUsedTable('valid', '{{ $index }}'); openEditVolunteerModal('valid', '{{ $index }}')">
-                        <i class="fa-solid fa-user-edit"></i> Edit
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary move-invalid-btn"
-                            onclick="moveToInvalid('{{ $index }}')">
-                        <i class="fa-solid fa-arrow-left"></i> Move to Invalid
-                    </button>
-                </td>
-            </tr>
-        @endforeach
-    @else
-        <tr>
-            <td colspan="13" class="text-center text-muted py-4">
-                <i class="fa-solid fa-check-circle fa-lg me-2"></i>
-                <span>No verified entries yet.</span>
-            </td>
-        </tr>
-    @endif
-</tbody>
+                                        @if(!empty($validEntries) && count($validEntries) > 0)
+                                            @foreach ($validEntries as $index => $entry)
+                                                <tr>
+                                                    <td><input type="checkbox" name="selected_valid[]" value="{{ $index }}"></td>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    @php
+                                                        $columns = [
+                                                            'full_name' => 'Name',
+                                                            'id_number' => 'School ID',
+                                                            'course' => 'Course',
+                                                            'year_level' => 'Year',
+                                                            'contact_number' => 'Contact #',
+                                                            'email' => 'Email',
+                                                            'emergency_contact' => 'Emergency #',
+                                                            'fb_messenger' => 'FB/Messenger',
+                                                            'barangay' => 'Barangay',
+                                                            'district' => 'District',
+                                                        ];
+                                                    @endphp
+                                                    @foreach ($columns as $key => $label)
+                                                        <td>
+                                                            @if(empty($entry[$key]))
+                                                                <p class="text-danger fw-semibold">No {{ $label }}</p>
+                                                            @else
+                                                                {{ $entry[$key] }}
+                                                            @endif
+                                                        </td>
+                                                    @endforeach
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                                onclick="setLastUsedTable('valid', '{{ $index }}'); openEditVolunteerModal('valid', '{{ $index }}')">
+                                                            <i class="fa-solid fa-user-edit"></i> Edit
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-secondary move-invalid-btn"
+                                                                onclick="moveToInvalid('{{ $index }}')">
+                                                            <i class="fa-solid fa-arrow-left"></i> Move to Invalid
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @else
+                                            <tr>
+                                                <td colspan="13" class="text-center text-muted py-4">
+                                                    <i class="fa-solid fa-check-circle fa-lg me-2"></i>
+                                                    <span>No verified entries yet.</span>
+                                                </td>
+                                            </tr>
+                                        @endif
+                                    </tbody>
 
                                     </table>
                                 </div>
@@ -525,9 +525,10 @@
             @csrf
         </form>
         {{-- Hidden form for submission --}}
-        <form id="submitVerifiedForm" action="" method="POST" style="display:none;">
+        <form id="submitVerifiedForm" action="{{ route('volunteer.import.validateSave') }}" method="POST" style="display:none;">
             @csrf
         </form>
+
 
 
 

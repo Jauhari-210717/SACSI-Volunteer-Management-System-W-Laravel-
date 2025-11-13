@@ -15,8 +15,7 @@ return new class extends Migration
                 $table->unsignedInteger('location_id')->nullable();
                 $table->unsignedInteger('course_id')->nullable();
                 $table->string('full_name');
-                $table->string('id_number')->nullable();
-                $table->string('school_id')->nullable();
+                $table->string('id_number')->nullable()->unique();
                 $table->string('year_level')->nullable();
                 $table->string('email')->nullable();
                 $table->string('contact_number')->nullable();

@@ -50,8 +50,7 @@ class CoursesTableSeeder extends Seeder
             ['college' => 'SOM', 'course_name' => 'Bachelor of Secondary Education Major in Filipino'],
             ['college' => 'SOM', 'course_name' => 'Bachelor of Secondary Education Major in Mathematics'],
             ['college' => 'SOM', 'course_name' => 'Bachelor of Secondary Education Major in Science'],
-            ['college' => 'SOM', 'course_name' => 'Bachelor of Secondary Education Major in Social Studies'],
-            ['college' => 'SOM', 'course_name' => 'Certificate in Professional Education'],
+            ['college' => 'SOM', 'course_name' => 'Bachelor of Secondary Education Major in Social Studies Certificate in Professional Education'],
         ];
 
         foreach ($courses as $course) {
