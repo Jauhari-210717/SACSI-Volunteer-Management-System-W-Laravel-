@@ -53,5 +53,9 @@ Route::prefix('volunteer-import')->group(function () {
     // Undo Delete selected invalid entries
     Route::get('/volunteer-import/undo-delete', [VolunteerImportController::class, 'undoDelete'])->name('volunteer.import.undo-delete');
 
-    
+    // Edit Class Schedule
+    // Edit Class Schedule
+Route::put('/volunteers/{id}/update-schedule', [VolunteerImportController::class, 'updateSchedule'])->name('volunteer.update-schedule');
+
+
 });

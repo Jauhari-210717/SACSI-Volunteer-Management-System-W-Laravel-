@@ -1,5 +1,6 @@
 @php
     $pageTitle = 'Volunteer Imports';
+    
 @endphp
 
 <!DOCTYPE html>
@@ -25,496 +26,634 @@
 
     <div class="scroll-container">
 
-        {{-- 1.IMPORT & VALIDATION --}}
 
-        <section id="import-Section">
-            <div class="database-container">
-                <main class="database-main">
-                    <div class="import-section">
+      {{-- 1. IMPORT & VALIDATION --}}
+<section id="import-Section-invalid">
+    <div class="database-container">
+        <main class="database-main">
+            <div class="import-section">
 
-                        {{-- Header --}}
-                        <div class="import-controls">
-                            <h2 class="section-title"><i class="fas fa-tasks"></i> Import & Validation</h2>
-                            <div class="action-buttons">
-                                <button class="btn btn-outline-secondary import-btn" onclick="openModal('importHandlingModal1')">
-                                    <i class="fas fa-book fa-xl"></i> Import & Validation Guide
-                                </button>
-                            </div>
-                        </div>
-                        
-                        {{-- File Upload + Reset on same row --}}
-                        <div class="import-controls d-flex align-items-center gap-2">
-                           {{-- CSV Upload Form --}}
-                           <form action="{{ route('volunteer.import.preview') }}" method="POST" enctype="multipart/form-data">
-                               @csrf
-                               <div class="import-controls">
-                                       <div class="file-upload">
-                                       <div class="input-group">
-                                           <input type="file" name="csv_file" class="form-control d-none" id="file-upload" accept=".csv" required>
-                                           <button class="btn btn-outline-secondary rounded-1" type="button" id="file-upload-button">
-                                               <i class="fa-solid fa-file-csv me-2"></i> Choose File
-                                           </button>
-                                           <span class="file-path" id="file-path">
-                                               {{ session('uploaded_file_name', 'No file chosen') }}
-                                           </span>
-                                       </div>
-                                   </div>
-                                   <div class="uploader-info">
-                                       <input type="text" class="form-control" value="Uploading as {{ Auth::guard('admin')->user()->username ?? 'Guest' }}" readonly>
-                                       @if(!session('csv_imported'))
-                                           <button type="submit" class="btn btn-outline-secondary import-btn">
-                                               <i class="fa-solid fa-upload"></i> Import
-                                           </button>
-                                       @endif
-                                   </div>
-                               </div>
-                           </form>
-                           {{-- Reset / Clear All Import Previews Button --}}
-                           @if(session()->has('validEntries') || session()->has('invalidEntries'))
-                               <button type="button" 
-                                       class="btn btn-outline-warning import-btn" 
-                                       id="openResetModal"
-                                       title="Clear all imported entries from preview">
-                                   <i class="fa-solid fa-rotate-left me-1"></i> Clear Imports
-                               </button>
-                           @endif
-                        </div>
-
-                        <hr class="red-hr">
-
-                        <div class="action-message {{ session('success') ? 'text-success' : 'd-none' }}">
-                            <span class="message-text">{!! session('success') !!}</span>
-                            <button type="button" class="close-message-btn">&times;</button>
-                        </div>
-
-
-
-                        {{-- Data Table --}}
-                        <form action="{{ route('volunteer.import.moveInvalidToValid') }}" method="POST">
-                            @csrf
-                            <div class="data-table-container" >
-                                <div class="table-controls mb-0" >
-                                   
-                                    <div class="table-actions d-flex align-items-center justify-content-center gap-2">
-                                        <h3>Invalid Entries</h3>
-
-                                        {{-- Edit Table Toggle --}}
-                                        <button type="button" class="toggle-edit-btn btn btn-outline-secondary btn-sm">
-                                            <i class="fa-solid fa-pen-to-square"></i> Edit Table
-                                        </button>
-
-                                        {{-- Hidden Actions --}}
-                                        <div class="hidden-actions">
-                                            <!-- Select All -->
-                                            <button type="button" class="btn btn-outline-primary btn-sm select-all-btn">
-                                                <i class="fa-solid fa-check-double"></i> Select All
-                                            </button>
-
-                                            <!-- Delete Selected -->
-                                            <button type="button" 
-                                                    class="btn btn-outline-danger btn-sm delete-btn"
-                                                    data-action="{{ route('volunteer.deleteEntries') }}"
-                                                    data-table-type="invalid">
-                                                <i class="fa-solid fa-trash-can"></i> Delete
-                                            </button>
-
-                                            <!-- Copy Selected -->
-                                            <button type="button" class="btn btn-outline-success btn-sm copy-btn">
-                                                <i class="fa-solid fa-copy"></i> Copy
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                               <div class="table-responsive mt-3">
-                                    <table id="invalid-entries-table" class="table table-hover volunteer-table">
-                                        <thead>
-                                            <tr>
-                                                <th><input type="checkbox" class="select-all-invalid"></th> <!-- Invalid Table -->
-                                                <th>#</th> <!-- Row number -->
-                                                <th>Full Name</th>
-                                                <th>School ID</th>
-                                                <th>Course</th>
-                                                <th>Year</th>
-                                                <th>Contact #</th>
-                                                <th>Email</th>
-                                                <th>Emergency #</th>
-                                                <th>FB/Messenger</th>
-                                                <th>Barangay</th>
-                                                <th>District</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @if(!empty($invalidEntries) && count($invalidEntries) > 0)
-                                                @foreach ($invalidEntries as $index => $entry)
-                                                    <tr>
-                                                        <td>
-                                                            <input type="checkbox" name="selected_invalid[]" value="{{ $index }}">
-                                                        </td>
-                                                        <td>{{ $index + 1 }}</td>
-
-                                                            @foreach ([
-                                                                'full_name' => 'Name',
-                                                                'id_number' => 'School ID',
-                                                                'course' => 'Course',
-                                                                'year_level' => 'Year',
-                                                                'contact_number' => 'Contact #',
-                                                                'email' => 'Email',
-                                                                'emergency_contact' => 'Emergency #',
-                                                                'fb_messenger' => 'FB/Messenger',
-                                                                'barangay' => 'Barangay',
-                                                                'district' => 'District',
-                                                            ] as $key => $label)
-                                                                @php
-                                                                    $value = $entry[$key] ?? '';
-                                                                    $tooltip = '';
-
-                                                                    if (isset($entry['errors'][$key]) && count((array)$entry['errors'][$key]) > 0) {
-                                                                        $errorsArray = is_array($entry['errors'][$key]) ? $entry['errors'][$key] : [$entry['errors'][$key]];
-
-                                                                        // Human-readable messages
-                                                                        $readableErrors = [];
-                                                                        foreach ($errorsArray as $err) {
-                                                                            if ($key == 'full_name') $readableErrors[] = 'Invalid Name (letters, spaces, and punctuation only)';
-                                                                            elseif ($key == 'id_number') $readableErrors[] = 'Invalid School ID (6-7 digits)';
-                                                                            elseif ($key == 'year_level') $readableErrors[] = 'Invalid Year (must be 1-6)';
-                                                                            elseif ($key == 'contact_number') $readableErrors[] = 'Invalid Contact Number (09XXXXXXXXX or +639XXXXXXXXX)';
-                                                                            elseif ($key == 'emergency_contact') $readableErrors[] = 'Invalid Emergency Number (09XXXXXXXXX or +639XXXXXXXXX)';
-                                                                            elseif ($key == 'email') $readableErrors[] = 'Invalid Email (must be @gmail.com or @adzu.edu.ph)';
-                                                                            elseif ($key == 'fb_messenger') $readableErrors[] = 'Invalid FB/Messenger URL';
-                                                                            elseif ($key == 'barangay') $readableErrors[] = 'Invalid Barangay (must be text, max 255 chars)';
-                                                                            elseif ($key == 'district') $readableErrors[] = 'Invalid District (must be 1 or 2)';
-                                                                            else $readableErrors[] = $err;
-                                                                        }
-
-                                                                        if (empty($value)) {
-                                                                            array_unshift($readableErrors, "Missing {$label}");
-                                                                        }
-
-                                                                        $tooltip = implode('<br>', $readableErrors);
-                                                                    }
-                                                                @endphp
-                                                                <td
-                                                                    @if(!empty($tooltip))
-                                                                        class="text-danger fw-semibold"
-                                                                        data-bs-toggle="tooltip"
-                                                                        data-bs-html="true"
-                                                                        data-bs-placement="top"
-                                                                        title="{!! $tooltip !!}"
-                                                                        style="cursor: help; text-decoration: underline dotted;"
-                                                                    @endif
-                                                                >
-                                                                    {{ empty($value) ? 'No '.$label : $value }}
-                                                                </td>
-                                                            @endforeach
-                                                        <td>
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                                    onclick="setLastUsedTable('invalid', '{{ $index }}'); openEditVolunteerModal('invalid', '{{ $index }}')">
-                                                                <i class="fa-solid fa-user-edit"></i> Edit
-                                                            </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary move-btn"
-                                                                    onclick="submitMoveToValid(this)">
-                                                                <i class="fa-solid fa-arrow-right"></i> Validate
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
-                                            @else
-                                                <tr>
-                                                    <td colspan="13" class="text-center text-muted py-4">
-                                                        <i class="fa-solid fa-file-import fa-lg me-2"></i>
-                                                        <span>No invalid entries yet.</span>
-                                                    </td>
-                                                </tr>
-                                            @endif
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                {{-- Initialize Bootstrap tooltips --}}
-                                <script>
-                                    document.addEventListener('DOMContentLoaded', function () {
-                                        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                                        tooltipTriggerList.map(function (tooltipTriggerEl) {
-                                            return new bootstrap.Tooltip(tooltipTriggerEl);
-                                        });
-                                    });
-                                </script>
-
-
-                                <div class="submit-section">
-                                    @if(count($invalidEntries) > 0)
-                                        <button type="button" class="btn btn-danger submit-database" id="openMoveModalBtn">
-                                            Move to All Invalid Entries
-                                        </button>
-                                    @else
-                                        <button type="button" class="btn btn-danger submit-database" disabled>
-                                            Move to All Invalid Entries
-                                        </button>
-                                    @endif
-                                </div>
-                            </div>
-                        </form>
+                {{-- Header --}}
+                <div class="import-controls">
+                    <h2 class="section-title"><i class="fas fa-tasks"></i> Import & Validation</h2>
+                    <div class="action-buttons">
+                        <button class="btn btn-outline-secondary import-btn" onclick="openModal('importHandlingModal1')">
+                            <i class="fas fa-book fa-xl"></i> Import & Validation Guide
+                        </button>
                     </div>
-                </main>
-            </div>
-        </section>
+                </div>
 
-        {{-- 2.Submit Valid Entries to DB --}}
-        <section id="import-Section">
-            <div class="database-container">
-                <main class="database-main">
-                    <div class="import-section">
+                {{-- File Upload + Reset --}}
+                <div class="import-controls d-flex align-items-center gap-2">
+                    <form action="{{ route('volunteer.import.preview') }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="import-controls">
+                            <div class="file-upload">
+                                <div class="input-group">
+                                    <input type="file" name="csv_file" class="form-control d-none" id="file-upload" accept=".csv" required>
+                                    <button class="btn btn-outline-secondary rounded-1" type="button" id="file-upload-button">
+                                        <i class="fa-solid fa-file-csv me-2"></i> Choose File
+                                    </button>
+                                    <span class="file-path" id="file-path">
+                                        {{ session('uploaded_file_name', 'No file chosen') }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="uploader-info">
+                                <input type="text" class="form-control" value="Uploading as {{ Auth::guard('admin')->user()->username ?? 'Guest' }}" readonly>
+                                @if(!session('csv_imported'))
+                                    <button type="submit" class="btn btn-outline-secondary import-btn">
+                                        <i class="fa-solid fa-upload"></i> Import
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+                    </form>
 
-                        {{-- Header --}}
-                        <div class="import-header d-flex align-items-center justify-content-between mb-2">
-                            <div class="import-controls">
-                                <h2 class="section-title">
-                                    <i class="fas fa-user-check"></i> Verified Entries
-                                </h2>
-                                <div class="action-buttons">
-                                    <button class="btn btn-outline-secondary import-btn" 
-                                            onclick="closeModal('importHandlingModal1'); openModal('importHandlingModal2');">
-                                        <i class="fas fa-book fa-xl"></i> Valid Entries Guide
+                    @if(session()->has('validEntries') || session()->has('invalidEntries'))
+                        <button type="button" 
+                                class="btn btn-outline-warning import-btn" 
+                                id="openResetModal"
+                                title="Clear all imported entries from preview">
+                            <i class="fa-solid fa-rotate-left me-1"></i> Clear Imports
+                        </button>
+                    @endif
+                </div>
+
+                <hr class="red-hr">
+
+                <div class="action-message {{ session('success') ? 'text-success' : 'd-none' }}">
+                    <span class="message-text">{!! session('success') !!}</span>
+                    <button type="button" class="close-message-btn">&times;</button>
+                </div>
+
+                {{-- Data Table --}}
+                <form action="{{ route('volunteer.import.moveInvalidToValid') }}" method="POST">
+                    @csrf
+                    <div class="data-table-container">
+                        <div class="table-controls mb-0">
+                            <div class="table-actions d-flex align-items-center justify-content-center gap-2">
+                                <h3>Invalid Entries</h3>
+                                <button type="button" class="toggle-edit-btn btn btn-outline-secondary btn-sm">
+                                    <i class="fa-solid fa-pen-to-square"></i> Edit Table
+                                </button>
+
+                                <div class="hidden-actions">
+                                    <button type="button" class="btn btn-outline-primary btn-sm select-all-btn">
+                                        <i class="fa-solid fa-check-double"></i> Select All
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-outline-danger btn-sm delete-btn"
+                                            data-action="{{ route('volunteer.deleteEntries') }}"
+                                            data-table-type="invalid">
+                                        <i class="fa-solid fa-trash-can"></i> Delete
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success btn-sm copy-btn">
+                                        <i class="fa-solid fa-copy"></i> Copy
                                     </button>
                                 </div>
                             </div>
                         </div>
 
-                        <hr class="red-hr">
+                        <div class="table-responsive mt-3">
+                            <table id="invalid-entries-table" class="table table-hover table-striped volunteer-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" class="select-all-invalid"></th>
+                                        <th>#</th>
+                                        <th>Full Name</th>
+                                        <th>School ID</th>
+                                        <th>Course</th>
+                                        <th>Year</th>
+                                        <th>Contact #</th>
+                                        <th>Email</th>
+                                        <th>Emergency #</th>
+                                        <th>FB/Messenger</th>
+                                        <th>Barangay</th>
+                                        <th>District</th>
+                                        <th>Class Schedule</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(!empty($invalidEntries) && count($invalidEntries) > 0)
+                                        @foreach ($invalidEntries as $index => $entry)
+                                            @php
+                                                $hasErrors = isset($entry['errors']) && count($entry['errors']) > 0;
+                                                $missingRequired = false;
+                                                foreach (['full_name','id_number','course','year_level','contact_number','email','barangay','district'] as $requiredField) {
+                                                    if (empty($entry[$requiredField])) $missingRequired = true;
+                                                }
 
-                        <div class="action-message {{ session('success') ? 'text-success' : 'd-none' }}">
-                            <span class="message-text">{!! session('success') !!}</span>
-                            <button type="button" class="close-message-btn">&times;</button>
-                        </div>
+                                                $rowClass = $hasErrors ? 'invalid-row' : ($missingRequired ? 'invalid-row-light' : '');
+                                                $scheduleValue = trim($entry['class_schedule'] ?? '');
+                                                $scheduleValid = !empty($scheduleValue) && strlen($scheduleValue) > 4;
 
+                                                $columns = [
+                                                    'full_name' => 'Name',
+                                                    'id_number' => 'School ID',
+                                                    'course' => 'Course',
+                                                    'year_level' => 'Year',
+                                                    'contact_number' => 'Contact #',
+                                                    'email' => 'Email',
+                                                    'emergency_contact' => 'Emergency #',
+                                                    'fb_messenger' => 'FB/Messenger',
+                                                    'barangay' => 'Barangay',
+                                                    'district' => 'District'
+                                                ];
 
-                        {{-- Data Table --}}
-                        <form action="{{ route('volunteer.import.validateSave') }}" method="POST">
-                            @csrf
-                            <div class="data-table-container">
-                                <div class="table-controls mb-0">
-                                    <div class="table-actions d-flex align-items-center justify-content-center gap-2">
-                                        <h3>Valid Entries</h3>
+                                                $truncatedFields = ['full_name','course','email','fb_messenger','barangay','district'];
+                                            @endphp
 
-                                        {{-- Edit Table Toggle --}}
-                                        <button type="button" class="toggle-edit-btn btn btn-outline-secondary btn-sm">
-                                            <i class="fa-solid fa-pen-to-square"></i> Edit Table
-                                        </button>
+                                            <tr class="{{ $rowClass }}">
+                                                <td><input type="checkbox" name="selected_invalid[]" value="{{ $index }}"></td>
+                                                <td>{{ $index + 1 }}</td>
 
-                                        {{-- Hidden Actions --}}
-                                        <div class="hidden-actions">
-                                            <!-- Select All -->
-                                            <button type="button" class="btn btn-outline-primary btn-sm select-all-btn">
-                                                <i class="fa-solid fa-check-double"></i> Select All
-                                            </button>
-
-                                            <!-- Delete Selected -->
-                                            <button type="button" 
-                                                    class="btn btn-outline-danger btn-sm delete-btn"
-                                                    data-action="{{ route('volunteer.deleteEntries') }}"
-                                                    data-table-type="valid">
-                                                <i class="fa-solid fa-trash-can"></i> Delete
-                                            </button>
-
-                                            <!-- Copy Selected -->
-                                            <button type="button" class="btn btn-outline-success btn-sm copy-btn">
-                                                <i class="fa-solid fa-copy"></i> Copy
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="table-responsive mt-3">
-                                    <table id="valid-entries-table" class="table table-hover volunteer-table">
-                                        <thead>
-                                            <tr>
-                                                <th><input type="checkbox" class="select-all-valid"></th>   <!-- Valid Table -->
-                                                <th>#</th> <!-- Row number -->
-                                                <th>Full Name</th>
-                                                <th>School ID</th>
-                                                <th>Course</th>
-                                                <th>Year</th>
-                                                <th>Contact #</th>
-                                                <th>Email</th>
-                                                <th>Emergency #</th>
-                                                <th>FB/Messenger</th>
-                                                <th>Barangay</th>
-                                                <th>District</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                        @if(!empty($validEntries) && count($validEntries) > 0)
-                                            @foreach ($validEntries as $index => $entry)
-                                                <tr>
-                                                    <td><input type="checkbox" name="selected_valid[]" value="{{ $index }}"></td>
-                                                    <td>{{ $index + 1 }}</td>
+                                                @foreach ($columns as $key => $label)
                                                     @php
-                                                        $columns = [
-                                                            'full_name' => 'Name',
-                                                            'id_number' => 'School ID',
-                                                            'course' => 'Course',
-                                                            'year_level' => 'Year',
-                                                            'contact_number' => 'Contact #',
-                                                            'email' => 'Email',
-                                                            'emergency_contact' => 'Emergency #',
-                                                            'fb_messenger' => 'FB/Messenger',
-                                                            'barangay' => 'Barangay',
-                                                            'district' => 'District',
-                                                        ];
+                                                        $value = trim($entry[$key] ?? '');
+                                                        $isTruncated = in_array($key, $truncatedFields);
+                                                        $displayVal = $value;
+
+                                                        if ($isTruncated && strlen($value) > 20) {
+                                                            $displayVal = substr($value, 0, 20) . '...';
+                                                        }
+
+                                                        $errors = $entry['errors'][$key] ?? [];
+                                                        $errors = is_array($errors) ? $errors : [$errors];
+                                                        $tooltip = '';
+
+                                                        if (!empty($errors)) {
+                                                            $tooltip = implode('<br>', array_map(fn($e)=>e($e), $errors));
+                                                            if (empty($value)) $tooltip = "Missing $label<br>" . $tooltip;
+                                                        }
+
+                                                        $tooltipText = $tooltip ?: (!empty($value) ? $value : "No $label");
                                                     @endphp
-                                                    @foreach ($columns as $key => $label)
-                                                        <td>
-                                                            @if(empty($entry[$key]))
-                                                                <p class="text-danger fw-semibold">No {{ $label }}</p>
-                                                            @else
-                                                                {{ $entry[$key] }}
+
+                                                    <td
+                                                        @if($tooltipText)
+                                                            @if(!empty($errors))
+                                                                class="text-danger fw-semibold invalid-cell"
+                                                            @elseif($isTruncated)
+                                                                class="text-truncate"
+                                                                style="max-width: 150px;"
                                                             @endif
-                                                        </td>
-                                                    @endforeach
-                                                    <td>
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                                                onclick="setLastUsedTable('valid', '{{ $index }}'); openEditVolunteerModal('valid', '{{ $index }}')">
-                                                            <i class="fa-solid fa-user-edit"></i> Edit
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-outline-secondary move-invalid-btn"
-                                                                onclick="moveToInvalid('{{ $index }}')">
-                                                            <i class="fa-solid fa-arrow-left"></i> Move to Invalid
-                                                        </button>
+                                                            data-bs-toggle="tooltip"
+                                                            data-bs-html="true"
+                                                            title="{!! $tooltipText !!}"
+                                                        @endif
+                                                    >
+                                                        {{ $displayVal ?: "No $label" }}
                                                     </td>
-                                                </tr>
-                                            @endforeach
-                                        @else
-                                            <tr>
-                                                <td colspan="13" class="text-center text-muted py-4">
-                                                    <i class="fa-solid fa-check-circle fa-lg me-2"></i>
-                                                    <span>No verified entries yet.</span>
+                                                @endforeach
+
+                                                <td>
+                                                    @php
+                                                        // Determine display text for the button
+                                                        $buttonText = $scheduleValid ? 'Schedule' : 'No Class Schedule';
+                                                        $displaySchedule = $scheduleValid ? $scheduleValue : 'No Class Schedule';
+                                                    @endphp
+
+                                                    <button type="button"
+                                                            class="btn btn-sm {{ $scheduleValid ? 'btn-success' : 'btn-danger' }}"
+                                                            onclick="openScheduleModal(
+                                                                `{!! nl2br(e($displaySchedule)) !!}`,
+                                                                'valid',
+                                                                '{{ $index }}'
+                                                            )">
+                                                        {{ $buttonText }}
+                                                    </button>
+
+                                                </td>
+
+
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                            onclick="setLastUsedTable('invalid', '{{ $index }}'); openEditVolunteerModal('invalid', '{{ $index }}')"
+                                                            data-bs-toggle="tooltip"
+                                                            title="Edit this invalid entry">
+                                                        <i class="fa-solid fa-user-edit"></i> Edit
+                                                    </button>
+
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary move-btn"
+                                                            onclick="submitMoveToValid(this)"
+                                                            data-bs-toggle="tooltip"
+                                                            title="Validate this entry and move to verified entries">
+                                                        <i class="fa-solid fa-arrow-right"></i> Validate
+                                                    </button>
                                                 </td>
                                             </tr>
-                                        @endif
-                                    </tbody>
-
-                                    </table>
-                                </div>
-
-
-                               <div class="submit-section">
-                                    @if(count($validEntries) > 0)
-                                        <button type="button" class="btn btn-danger submit-database" id="openSubmitModalBtn">
-                                            <i class="fa-solid fa-database"></i> Submit
-                                        </button>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="14" class="text-center text-muted py-4">
+                                                <i class="fa-solid fa-file-import fa-lg me-2"></i>
+                                                <span>No invalid entries yet.</span>
+                                            </td>
+                                        </tr>
                                     @endif
-                                </div>
 
-                            </div>
-                        </form>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="submit-section">
+                            <button type="button" class="btn btn-danger submit-database" id="openMoveModalBtn"
+                                @if(count($invalidEntries) === 0 || empty($selectedBarangay)) disabled @endif
+                                data-bs-toggle="tooltip"
+                                title="Move all invalid entries to verified entries">
+                                Move to All Invalid Entries
+                            </button>
+                        </div>
                     </div>
-                </main>
+                </form>
             </div>
-        </section>
+        </main>
+    </div>
+</section>
+
+{{-- 2. Submit Valid Entries to DB --}}
+<section id="import-Section-valid">
+    <div class="database-container">
+        <main class="database-main">
+            <div class="import-section">
+
+                {{-- Header --}}
+                <div class="import-header d-flex align-items-center justify-content-between mb-2">
+                    <div class="import-controls">
+                        <h2 class="section-title">
+                            <i class="fas fa-user-check"></i> Verified Entries
+                        </h2>
+                        <div class="action-buttons">
+                            <button class="btn btn-outline-secondary import-btn"
+                                    onclick="closeModal('importHandlingModal1'); openModal('importHandlingModal2');">
+                                <i class="fas fa-book fa-xl"></i> Valid Entries Guide
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="red-hr">
+
+                <div class="action-message {{ session('success') ? 'text-success' : 'd-none' }}">
+                    <span class="message-text">{!! session('success') !!}</span>
+                    <button type="button" class="close-message-btn">&times;</button>
+                </div>
+
+                <form action="{{ route('volunteer.import.validateSave') }}" method="POST">
+                    @csrf
+                    <div class="data-table-container">
+
+                        <div class="table-controls mb-0">
+                            <div class="table-actions d-flex align-items-center justify-content-center gap-2">
+                                <h3>Valid Entries</h3>
+                                <button type="button" class="toggle-edit-btn btn btn-outline-secondary btn-sm">
+                                    <i class="fa-solid fa-pen-to-square"></i> Edit Table
+                                </button>
+
+                                <div class="hidden-actions">
+                                    <button type="button" class="btn btn-outline-primary btn-sm select-all-btn">
+                                        <i class="fa-solid fa-check-double"></i> Select All
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm delete-btn"
+                                            data-action="{{ route('volunteer.deleteEntries') }}"
+                                            data-table-type="valid">
+                                        <i class="fa-solid fa-trash-can"></i> Delete
+                                    </button>
+                                    <button type="button" class="btn btn-outline-success btn-sm copy-btn">
+                                        <i class="fa-solid fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive mt-3">
+                            <table id="valid-entries-table" class="table table-hover table-striped volunteer-table">
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" class="select-all-valid"></th>
+                                        <th>#</th>
+                                        <th>Full Name</th>
+                                        <th>School ID</th>
+                                        <th>Course</th>
+                                        <th>Year</th>
+                                        <th>Contact #</th>
+                                        <th>Email</th>
+                                        <th>Emergency #</th>
+                                        <th>FB/Messenger</th>
+                                        <th>Barangay</th>
+                                        <th>District</th>
+                                        <th>Class Schedule</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(!empty($validEntries) && count($validEntries) > 0)
+                                        @foreach ($validEntries as $index => $entry)
+                                            <tr class="valid-entry">
+                                                <td><input type="checkbox" name="selected_valid[]" value="{{ $index }}"></td>
+                                                <td>{{ $index + 1 }}</td>
+
+                                                @php
+                                                    $columns = [
+                                                        'full_name' => 'Name',
+                                                        'id_number' => 'School ID',
+                                                        'course' => 'Course',
+                                                        'year_level' => 'Year',
+                                                        'contact_number' => 'Contact #',
+                                                        'email' => 'Email',
+                                                        'emergency_contact' => 'Emergency #',
+                                                        'fb_messenger' => 'FB/Messenger',
+                                                        'barangay' => 'Barangay',
+                                                        'district' => 'District',
+                                                        'class_schedule' => 'Class Schedule',
+                                                    ];
+
+                                                    // Fields to truncate with tooltip
+                                                    $truncatedFields = ['full_name','course','email','fb_messenger','barangay','district'];
+                                                @endphp
+
+                                                @foreach ($columns as $key => $label)
+                                                    @php
+                                                        $value = trim($entry[$key] ?? '');
+                                                        $isTruncated = in_array($key, $truncatedFields);
+                                                        $displayVal = $value;
+
+                                                        if ($isTruncated && strlen($value) > 20) {
+                                                            $displayVal = substr($value, 0, 20) . '...';
+                                                        }
+
+                                                        $tooltipText = !empty($value) ? $value : "No $label";
+                                                    @endphp
+
+                                                    @if($key === 'class_schedule')
+                                                    <td>
+                                                        @php
+                                                            $scheduleValid = !empty(trim($entry['class_schedule'] ?? ''));
+                                                            $buttonText = $scheduleValid ? 'Schedule' : 'No Class Schedule';
+                                                            $displaySchedule = $scheduleValid ? $entry['class_schedule'] : 'No Class Schedule';
+                                                        @endphp
+
+                                                        <button type="button"
+                                                                class="btn btn-sm {{ $scheduleValid ? 'btn-success' : 'btn-danger' }}"
+                                                                onclick="openScheduleModal(
+                                                                    `{!! nl2br(e($displaySchedule)) !!}`,
+                                                                    'valid',
+                                                                    '{{ $index }}'
+                                                                )">
+                                                            {{ $buttonText }}
+                                                        </button>
+
+                                                    </td>
+                                                @elseif($isTruncated)
+                                                    <td class="text-truncate" style="max-width: 150px;"
+                                                        data-bs-toggle="tooltip"
+                                                        data-bs-html="true"
+                                                        title="{{ $tooltipText }}">
+                                                        {{ $displayVal ?: "No $label" }}
+                                                    </td>
+                                                @else
+
+
+                                                        <td>{{ $displayVal ?: "No $label" }}</td>
+                                                    @endif
+                                                @endforeach
+
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                            onclick="setLastUsedTable('valid', '{{ $index }}'); openEditVolunteerModal('valid', '{{ $index }}')"
+                                                            data-bs-toggle="tooltip"
+                                                            title="Edit this verified entry">
+                                                        <i class="fa-solid fa-user-edit"></i> Edit
+                                                    </button>
+
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary move-invalid-btn"
+                                                            onclick="moveToInvalid('{{ $index }}')"
+                                                            data-bs-toggle="tooltip"
+                                                            title="Move this entry back to invalid entries">
+                                                        <i class="fa-solid fa-arrow-left"></i> Move to Invalid
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="14" class="text-center text-muted py-4">
+                                                <i class="fa-solid fa-check-circle fa-lg me-2"></i>
+                                                <span>No verified entries yet.</span>
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="submit-section">
+                            @php
+                                $validEntries = session('validEntries', []);
+                                $hasValidEntries = count($validEntries) > 0;
+                            @endphp
+
+                            @if($hasValidEntries)
+                                <button type="button" class="btn btn-danger submit-database" id="openSubmitModalBtn"
+                                        data-bs-toggle="tooltip"
+                                        title="Submit all verified entries to the database">
+                                    <i class="fa-solid fa-database"></i> Submit
+                                </button>
+                            @endif
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+        </main>
+    </div>
+</section>
+
+{{-- Bootstrap tooltip initialization --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+
+<style>/* Highlight valid entries */
+.valid-entry {
+    background-color: #e0f7e0;  /* Light green */
+}
+
+/* Shorten FB/Messenger links */
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Adjust button color for Schedule */
+.btn-success {
+    background-color: #28a745;  /* Green */
+    border-color: #28a745;
+}
+
+.btn-danger {
+    background-color: #dc3545;  /* Red */
+    border-color: #dc3545;
+}
+
+.btn-sm {
+    font-size: 0.875rem;  /* Smaller button size */
+}
+
+/* Optional: Tooltip styling (if needed) */
+[data-bs-toggle="tooltip"] {
+    cursor: help;
+    text-decoration: underline dotted;
+}
+
+ /* Remove underline from table buttons / links */
+    .volunteer-table button,
+    .volunteer-table a {
+        text-decoration: none !important;
+    }
+
+    /* Make long text truncate with ellipsis */
+    .text-truncate {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    [data-bs-toggle="tooltip"] {
+    cursor: help;
+    text-decoration: none;
+}
+</style>
 
         {{-- 3.IMPORT LOGS --}}
         <section id="importlog-Section">
-            <div class="database-container">
-                <main class="database-main"> 
-                    <div class="import-section">
-                        {{-- Header --}}
-                        <div class="import-controls">
-                            <h2 class="section-title"><i class="fas fa-history"></i> Import Logs</h2>
-                        </div>
+    <div class="database-container">
+        <main class="database-main"> 
+            <div class="import-section">
 
-                        <div class="action-message {{ session('success') ? 'text-success' : 'd-none' }}">
-                            <span class="message-text">{!! session('success') !!}</span>
-                            <button type="button" class="close-message-btn">&times;</button>
-                        </div>
+                {{-- Header --}}
+                <div class="import-controls mb-3">
+                    <h2 class="section-title"><i class="fas fa-history"></i> Import Logs</h2>
+                </div>
 
+                {{-- Action Message --}}
+                <div class="action-message {{ session('success') ? 'text-success' : 'd-none' }}">
+                    <span class="message-text">{!! session('success') !!}</span>
+                    <button type="button" class="close-message-btn">&times;</button>
+                </div>
 
+                <hr class="red-hr">
 
-                        <hr class="red-hr">
+                <div class="data-table-container">
+                    <div class="table-controls mb-0">
+                        <div class="table-actions d-flex align-items-center justify-content-center gap-2">
+                            <h3>Import History</h3>
 
-                        <div class="data-table-container">
-                            <div class="table-controls mb-0">
-                                <div class="table-actions d-flex align-items-center justify-content-center gap-2">
-                                    <h3>Valid Entries</h3>
+                            {{-- Edit Table Toggle --}}
+                            <button type="button" class="toggle-edit-btn btn btn-outline-secondary btn-sm">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit Table
+                            </button>
 
-                                    {{-- Edit Table Toggle --}}
-                                    <button type="button" class="toggle-edit-btn btn btn-outline-secondary btn-sm">
-                                        <i class="fa-solid fa-pen-to-square"></i> Edit Table
-                                    </button>
-                                    {{-- Hidden Actions --}}
-                                    <div class="hidden-actions">
-                                        <!-- Select All -->
-                                        <button type="button" class="btn btn-outline-primary btn-sm select-all-btn">
-                                            <i class="fa-solid fa-check-double"></i> Select All
-                                        </button>
+                            {{-- Hidden Actions --}}
+                            <div class="hidden-actions">
+                                <button type="button" class="btn btn-outline-primary btn-sm select-all-btn">
+                                    <i class="fa-solid fa-check-double"></i> Select All
+                                </button>
 
-                                        <!-- Delete Selected -->
-                                        <button type="button" 
-                                                class="btn btn-outline-danger btn-sm delete-btn"
-                                                data-action="{{ route('volunteer.deleteEntries') }}"
-                                                data-table-type="logs">
-                                            <i class="fa-solid fa-trash-can"></i> Delete
-                                        </button>
+                                <button type="button" 
+                                        class="btn btn-outline-danger btn-sm delete-btn"
+                                        data-action="{{ route('volunteer.deleteEntries') }}"
+                                        data-table-type="logs">
+                                    <i class="fa-solid fa-trash-can"></i> Delete
+                                </button>
 
-                                        <!-- Copy Selected -->
-                                        <button type="button" class="btn btn-outline-success btn-sm copy-btn">
-                                            <i class="fa-solid fa-copy"></i> Copy
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="table-responsive mt-3">
-                                <table id="import-logs-table" class="table table-hover volunteer-table">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th><input type="checkbox" class="select-all-checkbox"></th>
-                                            <th>#</th> <!-- Row number -->
-                                            <th>File Name</th>
-                                            <th>Uploaded By</th>
-                                            <th>Uploaded At</th>
-                                            <th>Total Records</th>
-                                            <th>Valid</th>
-                                            <th>Invalid</th>
-                                            <th>Duplicate</th>
-                                            <th>Status</th>
-                                            <th>Remarks</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse ($importLogs as $log)
-                                            <tr>
-                                                <td><input type="checkbox" name="selected_logs[]" value="{{ $log->import_id }}"></td>
-                                                <td>{{ $log->import_id }}</td>
-                                                <td>{{ $log->file_name }}</td>
-                                                <td>{{ $log->admin->name ?? $log->admin->username ?? 'Unknown' }}</td>
-                                                <td>{{ optional($log->import_date ?? $log->created_at)->format('M d, Y h:i A') ?? '-' }}</td>
-                                                <td>{{ $log->total_records }}</td>
-                                                <td>{{ $log->valid_count }}</td>
-                                                <td>{{ $log->invalid_count }}</td>
-                                                <td>{{ $log->duplicate_count }}</td>
-                                                <td>{{ $log->status }}</td>
-                                                <td>{{ $log->remarks ?? '-' }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="12" class="text-center text-muted py-4">
-                                                    <i class="fa-solid fa-folder-open fa-lg me-2"></i>
-                                                    <span>No import logs found.</span>
-                                                </td>
-                                            </tr>
-                                        @endforelse
-
-                                    </tbody>
-                                </table>
+                                <button type="button" class="btn btn-outline-success btn-sm copy-btn">
+                                    <i class="fa-solid fa-copy"></i> Copy
+                                </button>
                             </div>
                         </div>
                     </div>
-                </main>
+                    
+                    <div class="table-responsive mt-3">
+                        <table id="import-logs-table" class="table table-hover table-striped volunteer-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th><input type="checkbox" class="select-all-checkbox"></th>
+                                    <th>#</th>
+                                    <th>File Name</th>
+                                    <th>Uploaded By</th>
+                                    <th>Uploaded At</th>
+                                    <th>Total Records</th>
+                                    <th>Valid</th>
+                                    <th>Invalid</th>
+                                    <th>Duplicate</th>
+                                    <th>Status</th>
+                                    <th style="min-width: 300px;">Remarks</th> <!-- wider column -->
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($importLogs as $log)
+                                    <tr class="align-middle">
+                                        <td><input type="checkbox" name="selected_logs[]" value="{{ $log->import_id }}"></td>
+                                        <td>{{ $log->import_id }}</td>
+
+                                        {{-- File Name --}}
+                                        <td class="text-truncate" style="max-width: 220px;" title="{{ $log->file_name }}">
+                                            {{ $log->file_name }}
+                                        </td>
+
+                                        <td>{{ $log->admin->name ?? $log->admin->username ?? 'Unknown' }}</td>
+                                        <td>{{ optional($log->import_date ?? $log->created_at)->format('M d, Y h:i A') ?? '-' }}</td>
+                                        <td>{{ $log->total_records }}</td>
+
+                                        {{-- Color-coded badges --}}
+                                        <td><span class="badge bg-success">{{ $log->valid_count }}</span></td>
+                                        <td><span class="badge bg-danger">{{ $log->invalid_count }}</span></td>
+                                        <td><span class="badge bg-warning text-dark">{{ $log->duplicate_count }}</span></td>
+
+                                        {{-- Status with badges --}}
+                                        @php
+                                            $statusClass = match(strtolower($log->status)) {
+                                                'completed' => 'bg-success',
+                                                'failed' => 'bg-danger',
+                                                'partial' => 'bg-warning text-dark',
+                                                default => 'bg-secondary'
+                                            };
+                                        @endphp
+                                        <td><span class="badge {{ $statusClass }}">{{ $log->status }}</span></td>
+
+                                        {{-- Expanded Remarks --}}
+                                        <td style="white-space: pre-line; padding: 0.75rem; min-width: 300px;">
+                                            {{ $log->remarks ?? '-' }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="11" class="text-center text-muted py-4">
+                                            <i class="fa-solid fa-folder-open fa-lg me-2"></i>
+                                            No import logs found.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
-        </section>
+        </main>
+    </div>
+</section>
 
         {{-- Hidden Delete Form (for all tables) --}}
         <form id="globalDeleteForm" method="POST" style="display:none;">
@@ -522,10 +661,6 @@
         </form>
         {{-- Hidden form for moving invalid entries to verified --}}
         <form id="moveToVerifiedForm" action="{{ route('volunteer.import.moveInvalidToValid') }}" method="POST" style="display:none;">
-            @csrf
-        </form>
-        {{-- Hidden form for submission --}}
-        <form id="submitVerifiedForm" action="{{ route('volunteer.import.validateSave') }}" method="POST" style="display:none;">
             @csrf
         </form>
 
@@ -544,6 +679,7 @@
     @include('layouts.modals.submit.volunteer_import.delete_message_modal')
     @include('layouts.modals.submit.volunteer_import.transfer_invalid_entries_modal')
     @include('layouts.modals.submit.volunteer_import.submit_valid_entries_modal')
+    @include('layouts.modals.submit.volunteer_import.view_schedule_modal')
     
     {{-- Scripts --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -551,38 +687,44 @@
 
     {{-- Remember Last Used Section --}}
     <script>
-        window.lastUsedTable = { type: null, index: null };
-
-        function setLastUsedTable(type, index) {
-            window.lastUsedTable.type = type;
-            window.lastUsedTable.index = index;
-
-            // Optional: store in sessionStorage so it persists across reload
-            sessionStorage.setItem('lastUsedTable', JSON.stringify({ type, index }));
-        }
-
-        // On page load, read from sessionStorage (but do NOT auto-open modal)
+        // On page load, initialize from Laravel flash
         document.addEventListener('DOMContentLoaded', () => {
-            const stored = sessionStorage.getItem('lastUsedTable');
-            if (stored) {
-                window.lastUsedTable = JSON.parse(stored);
+            @if(session('last_updated_table') && session('last_updated_indices'))
+                const table = "{{ session('last_updated_table') }}";
+                const indices = @json(session('last_updated_indices'));
 
-                // Scroll to last updated row
-                const { type, index } = window.lastUsedTable;
-                if (type && index !== null) {
-                    const table = document.getElementById(type + '-entries-table');
-                    if (table) {
-                        const row = table.querySelectorAll('tbody tr')[index];
+                // Store in sessionStorage for persistence
+                sessionStorage.setItem('lastUsedTable', JSON.stringify({ type: table, index: indices }));
+
+                // Highlight affected rows
+                indices.forEach(i => {
+                    const tbl = document.getElementById(table + '-entries-table');
+                    if (tbl) {
+                        const row = tbl.querySelectorAll('tbody tr')[i];
                         if (row) {
                             row.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             row.style.backgroundColor = '#fff3cd';
                             setTimeout(() => row.style.backgroundColor = '', 2000);
                         }
                     }
-                }
+                });
+            @endif
+
+            // Optional: read previous lastUsedTable from sessionStorage if Laravel flash is missing
+            const stored = sessionStorage.getItem('lastUsedTable');
+            if (stored) {
+                window.lastUsedTable = JSON.parse(stored);
             }
         });
+
+        // Helper to set last used table manually (for JS actions like edit modal)
+        function setLastUsedTable(type, index) {
+            window.lastUsedTable.type = type;
+            window.lastUsedTable.index = index;
+            sessionStorage.setItem('lastUsedTable', JSON.stringify({ type, index }));
+        }
     </script>
+
 
         {{-- Select All checkbox --}}
         <script>

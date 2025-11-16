@@ -90,10 +90,18 @@
     </div>
 </div>
 
-{{-- Hidden form for submission --}}
-<form id="submitVerifiedForm" action="{{ route('volunteer.import.validateSave') }}" method="POST" style="display:none;">
-    @csrf
-</form>
+<!-- Error Modal -->
+<div id="errorModal" class="custom-modal-overlay">
+    <div class="custom-modal error-modal">
+        <h3><i class="fa-solid fa-triangle-exclamation"></i> Error</h3>
+        <p id="errorModalMessage">Something went wrong.</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="closeErrorModal">
+                <i class="fa-solid fa-xmark"></i> Close
+            </button>
+        </div>
+    </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -101,53 +109,76 @@ document.addEventListener('DOMContentLoaded', () => {
     const openModalBtn = document.getElementById('openSubmitModalBtn');
     const confirmBtn = document.getElementById('confirmSubmitBtn');
     const cancelBtn = document.getElementById('cancelSubmitBtn');
-    const hiddenForm = document.getElementById('submitVerifiedForm');
 
-    if (!openModalBtn) return;
+    // visible form inside the valid section
+    const validForm = document.querySelector('#import-Section-valid form');
 
-    // Open modal
+    // error modal elements (if present)
+    const errorModal = document.getElementById('errorModal');
+    const errorMessageBox = document.getElementById('errorModalMessage');
+    const closeErrorBtn = document.getElementById('closeErrorModal');
+
+    if (!openModalBtn || !validForm) return;
+
+    function getTableCheckboxes() {
+        return document.querySelectorAll('#valid-entries-table tbody input[name="selected_valid[]"]');
+    }
+    function getCheckedTableCheckboxes() {
+        return document.querySelectorAll('#valid-entries-table tbody input[name="selected_valid[]"]:checked');
+    }
+
     openModalBtn.addEventListener('click', () => {
-        const checkboxes = document.querySelectorAll('#valid-entries-table tbody input[type="checkbox"]');
+        const checkboxes = getTableCheckboxes();
         if (checkboxes.length === 0) {
-            alert('No verified entries to submit.');
+            // show friendly error
+            if (errorModal && errorMessageBox) {
+                errorMessageBox.textContent = "No verified entries to submit.";
+                errorModal.classList.add('active');
+            } else {
+                alert('No verified entries to submit.');
+            }
             return;
         }
-        // Optionally check all checkboxes automatically
+
+        // Auto-check actual table checkboxes (optional)
         checkboxes.forEach(cb => cb.checked = true);
 
-        // Update modal message with count
         const count = checkboxes.length;
-        modal.querySelector('#modalSubmitCount').textContent = `Are you sure you want to submit ${count} verified entr${count > 1 ? 'ies' : 'y'} to the database?`;
+        modal.querySelector('#modalSubmitCount').textContent =
+            `Are you sure you want to submit ${count} verified entr${count > 1 ? 'ies' : 'y'} to the database?`;
 
         modal.classList.add('active');
     });
 
-    // Cancel submission
     cancelBtn.addEventListener('click', () => {
         modal.classList.remove('active');
     });
 
-    // Confirm submission
     confirmBtn.addEventListener('click', () => {
-        // Remove previous hidden inputs
-        hiddenForm.querySelectorAll('input[name="selected_valid[]"]').forEach(i => i.remove());
+        // BEFORE submitting: remove any hidden or non-checkbox inputs named selected_valid[] inside the form
+        // (this eliminates duplicates if leftover hidden inputs are present)
+        Array.from(validForm.querySelectorAll('input[name="selected_valid[]"]')).forEach(el => {
+            if (el.type !== 'checkbox') el.remove();
+        });
 
-        const selected = document.querySelectorAll('#valid-entries-table tbody input[type="checkbox"]:checked');
-        if (selected.length === 0) {
-            alert('No entries selected to submit.');
+        const checked = getCheckedTableCheckboxes();
+        if (checked.length === 0) {
+            if (errorModal && errorMessageBox) {
+                errorMessageBox.textContent = "No entries selected to submit.";
+                errorModal.classList.add('active');
+            } else {
+                alert('No entries selected to submit.');
+            }
             return;
         }
 
-        selected.forEach(cb => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'selected_valid[]';
-            input.value = cb.value;
-            hiddenForm.appendChild(input);
-        });
-
-        hiddenForm.submit();
+        // now submit the form — only actual checked checkboxes will be posted
+        validForm.submit();
         modal.classList.remove('active');
     });
+
+    if (closeErrorBtn) {
+        closeErrorBtn.addEventListener('click', () => errorModal.classList.remove('active'));
+    }
 });
 </script>

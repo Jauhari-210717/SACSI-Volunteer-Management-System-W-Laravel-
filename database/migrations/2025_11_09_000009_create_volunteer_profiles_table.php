@@ -11,22 +11,40 @@ return new class extends Migration
         if (!Schema::hasTable('volunteer_profiles')) {
             Schema::create('volunteer_profiles', function (Blueprint $table) {
                 $table->increments('volunteer_id');
+
+                // Foreign Keys
                 $table->unsignedInteger('import_id')->nullable();
                 $table->unsignedInteger('location_id')->nullable();
                 $table->unsignedInteger('course_id')->nullable();
+
+                // Main Required Field
                 $table->string('full_name');
+
+                // Basic Info
                 $table->string('id_number')->nullable()->unique();
                 $table->string('year_level')->nullable();
                 $table->string('email')->nullable();
                 $table->string('contact_number')->nullable();
                 $table->string('emergency_contact')->nullable();
-                $table->string('fb_messenger')->nullable();
-                $table->text('certificates')->nullable();
-                $table->text('class_schedule')->nullable();
-                $table->enum('status', ['active','inactive'])->default('active');
-                $table->text('notes')->nullable();
+
+                // Social
+                $table->string('fb_messenger')->default('No FB messenger');
+
+                // Location Info
+                $table->string('barangay')->nullable();
+                $table->string('district')->nullable();
+
+                // These should have defaults → MUST be string instead of text
+                $table->string('certificates')->default('No certificates');
+                $table->string('class_schedule')->default('No class schedule');
+                $table->string('notes')->default('No notes');
+
+                // Status
+                $table->enum('status', ['active', 'inactive'])->default('active');
+
                 $table->timestamps();
 
+                // Foreign keys
                 $table->foreign('import_id')->references('import_id')->on('import_logs')->onDelete('set null');
                 $table->foreign('location_id')->references('location_id')->on('locations')->onDelete('set null');
                 $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('set null');

@@ -293,18 +293,17 @@ input.invalid:-webkit-autofill:active {
   } 
 }
 </style>
-
 @php
 // Fetch courses
 $courses = DB::table('courses')
-->orderBy('college')
-->orderBy('course_name')
-->get();
+    ->orderBy('college')
+    ->orderBy('course_name')
+    ->get();
 
 // Fetch locations
 $locations = DB::table('locations')
-->orderBy('barangay')
-->get();
+    ->orderBy('barangay')
+    ->get();
 
 // Map barangay -> district_id
 $locationsMap = $locations->pluck('district_id', 'barangay');
@@ -312,100 +311,116 @@ $locationsMap = $locations->pluck('district_id', 'barangay');
 
 <script>
 window.volunteersData = {
-  invalid: @json(session('invalidEntries', [])),
-  valid: @json(session('validEntries', []))
+    invalid: @json(session('invalidEntries', [])),
+    valid: [
+        @foreach ($validEntries as $entry)
+        {
+            full_name: "{{ $entry['full_name'] }}",
+            id_number: "{{ $entry['id_number'] }}",
+            course: "{{ $entry['course'] }}",
+            year_level: "{{ $entry['year_level'] }}",
+            contact_number: "{{ $entry['contact_number'] }}",
+            email: "{{ $entry['email'] }}",
+            emergency_contact: "{{ $entry['emergency_contact'] }}",
+            fb_messenger: "{{ $entry['fb_messenger'] }}",
+            barangay: "{{ $entry['barangay'] }}",
+            district: "{{ $entry['district'] }}",
+            class_schedule: {!! json_encode($entry['class_schedule'] ?? '') !!}
+        },
+        @endforeach
+    ]
 };
 
-// Barangay -> District mapping
 const locationsMap = @json($locationsMap);
 </script>
 
 <div class="edit-volunteer-modal" id="editVolunteerModal">
-  <div class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <i class="fa-solid fa-user-edit modal-icon"></i>
-        <h2>Edit Volunteer</h2>
-      </div>
-
-      <form id="editVolunteerForm" method="POST">
-        @csrf
-        @method('PUT')
-        <div class="modal-body input-grid">
-          @php
-          $fields = [
-              'full_name' => ['label'=>'Full Name','icon'=>'fa-user','type'=>'text','required'=>true],
-              'id_number' => ['label'=>'School ID','icon'=>'fa-id-card','type'=>'text','required'=>true],
-              'course' => ['label'=>'Course','icon'=>'fa-graduation-cap','type'=>'select','required'=>true],
-              'year_level' => ['label'=>'Year Level','icon'=>'fa-calendar','type'=>'text','required'=>true],
-              'contact_number' => ['label'=>'Contact Number','icon'=>'fa-phone','type'=>'text','required'=>true],
-              'emergency_contact' => ['label'=>'Emergency Contact','icon'=>'fa-phone-volume','type'=>'text','required'=>true],
-              'email' => ['label'=>'Email','icon'=>'fa-envelope','type'=>'text','required'=>true],
-              'fb_messenger' => ['label'=>'FB Messenger','icon'=>'fa-comment','type'=>'text','required'=>false],
-              'barangay' => ['label'=>'Barangay','icon'=>'fa-house','type'=>'select','required'=>true],
-              'district' => ['label'=>'District','icon'=>'fa-map-location-dot','type'=>'text','required'=>true],
-          ];
-          @endphp
-
-          @foreach ($fields as $key => $info)
-          <div class="volunteer-info">
-            <label>{{ $info['label'] }} @if($info['required'])* @endif</label>
-            <div class="input-wrapper">
-
-              {{-- Barangay dropdown --}}
-              @if($info['type'] === 'select' && $key === 'barangay')
-                <select id="barangay" name="barangay">
-                  <option value="">-- Select Barangay --</option>
-                  @foreach($locations as $loc)
-                      <option value="{{ $loc->barangay }}">{{ $loc->barangay }}</option>
-                  @endforeach
-                </select>
-
-              {{-- Course dropdown --}}
-              @elseif($info['type'] === 'select' && $key === 'course')
-                <select id="course" name="course">
-                  <option value="">-- Select Course --</option>
-                  @foreach($courses as $course)
-                    <option value="{{ $course->course_name }}" data-college="{{ $course->college }}">
-                      {{ $course->course_name }}
-                    </option>
-                  @endforeach
-                </select>
-                <input type="hidden" id="college" name="college">
-
-              {{-- District field (readonly) --}}
-              @elseif($key === 'district')
-                <input type="text" id="district" name="district" placeholder="District" readonly>
-                <input type="hidden" id="district_id" name="district_id">
-
-              {{-- Other text fields --}}
-              @else
-                <input type="text" id="{{ $key }}" name="{{ $key }}" placeholder="{{ $info['label'] }}">
-              @endif
-              
-              {{-- Universal Error Message Span --}}
-              <i class="fa-solid {{ $info['icon'] }} input-icon"></i>
-              <span class="error-tooltip" id="{{ $key }}-error"></span>
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fa-solid fa-user-edit modal-icon"></i>
+                <h2>Edit Volunteer</h2>
             </div>
-          </div>
-          @endforeach
-        </div>
 
-        <div class="modal-footer">
-          <button type="button" class="modal-btn cancel" onclick="closeEditVolunteerModal()">
-            <i class="fa-solid fa-xmark"></i> Cancel
-          </button>
-          <button type="submit" class="modal-btn save">
-            <i class="fa-solid fa-floppy-disk"></i> Save Changes
-          </button>
+            <form id="editVolunteerForm" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body input-grid">
+                    @php
+                    $fields = [
+                        'full_name' => ['label'=>'Full Name','icon'=>'fa-user','type'=>'text','required'=>true],
+                        'id_number' => ['label'=>'School ID','icon'=>'fa-id-card','type'=>'text','required'=>true],
+                        'course' => ['label'=>'Course','icon'=>'fa-graduation-cap','type'=>'select','required'=>true],
+                        'year_level' => ['label'=>'Year Level','icon'=>'fa-calendar','type'=>'select','required'=>true],
+                        'contact_number' => ['label'=>'Contact Number','icon'=>'fa-phone','type'=>'text','required'=>true],
+                        'emergency_contact' => ['label'=>'Emergency Contact','icon'=>'fa-phone-volume','type'=>'text','required'=>true],
+                        'email' => ['label'=>'Email','icon'=>'fa-envelope','type'=>'text','required'=>true],
+                        'fb_messenger' => ['label'=>'FB Messenger','icon'=>'fa-comment','type'=>'text','required'=>false],
+                        'barangay' => ['label'=>'Barangay','icon'=>'fa-house','type'=>'select','required'=>true],
+                        'district' => ['label'=>'District','icon'=>'fa-map-location-dot','type'=>'text','required'=>true],
+                    ];
+                    @endphp
+
+                    @foreach ($fields as $key => $info)
+                    <div class="volunteer-info">
+                        <label>{{ $info['label'] }} @if($info['required'])* @endif</label>
+                        <div class="input-wrapper">
+                            @if($info['type'] === 'select' && $key === 'barangay')
+                                <select id="barangay" name="barangay">
+                                    <option value="">-- Select Barangay --</option>
+                                    @foreach($locations as $loc)
+                                        <option value="{{ $loc->barangay }}">{{ $loc->barangay }}</option>
+                                    @endforeach
+                                </select>
+                            @elseif($info['type'] === 'select' && $key === 'course')
+                                <select id="course" name="course">
+                                    <option value="">-- Select Course --</option>
+                                    @foreach($courses as $course)
+                                        <option value="{{ $course->course_name }}" data-college="{{ $course->college }}">
+                                            {{ $course->course_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <input type="hidden" id="college" name="college">
+                            @elseif($key === 'year_level')
+                                <select id="year_level" name="year_level">
+                                    <option value="">-- Select Year Level --</option>
+                                    @for($i=1; $i<=4; $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            @elseif($key === 'district')
+                                <input type="text" id="district" name="district" placeholder="District" readonly>
+                                <input type="hidden" id="district_id" name="district_id">
+                            @else
+                                <input type="text" id="{{ $key }}" name="{{ $key }}" placeholder="{{ $info['label'] }}">
+                            @endif
+                            <i class="fa-solid {{ $info['icon'] }} input-icon"></i>
+                            <span class="error-tooltip" id="{{ $key }}-error"></span>
+                        </div>
+                    </div>
+                    @endforeach
+
+                    <!-- Hidden class schedule -->
+                    <input type="hidden" id="class_schedule" name="class_schedule">
+                    <span class="error-tooltip" id="class_schedule-error"></span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="modal-btn cancel" onclick="closeEditVolunteerModal()">
+                        <i class="fa-solid fa-xmark"></i> Cancel
+                    </button>
+                    <button type="submit" class="modal-btn save">
+                        <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
-      </form>
     </div>
-  </div>
 </div>
 
 <script>
-  (function(){
+(function(){
     const modal = document.getElementById('editVolunteerModal');
     const form = document.getElementById('editVolunteerForm');
     const saveBtn = form.querySelector('.modal-btn.save');
@@ -415,195 +430,153 @@ const locationsMap = @json($locationsMap);
     const courseSelect = document.getElementById('course');
     const collegeInput = document.getElementById('college');
 
-    let barangayTouched = false; // Track if user has touched barangay
-
-    // --- Barangay -> District auto-fill ---
     function updateDistrict() {
-      const selectedBarangay = barangaySelect.value.trim();
-      const errorSpan = document.getElementById('district-error');
+        const selected = barangaySelect.value.trim();
+        const errorSpan = document.getElementById('district-error');
 
-      // Always treat as touched during validation
-      const showError = true;
-
-      if (!selectedBarangay) {
-        districtInput.value = '';
-        districtIdInput.value = '';
-        if (showError && errorSpan) {
-          errorSpan.textContent = 'District depends on Barangay selection';
-          districtInput.classList.add('invalid');
-          districtInput.classList.remove('valid');
-        } else {
-          districtInput.classList.remove('invalid','valid');
-          if(errorSpan) errorSpan.textContent = '';
+        if(!selected){
+            districtInput.value = '';
+            districtIdInput.value = '';
+            errorSpan.textContent = 'District depends on Barangay selection';
+            districtInput.classList.add('invalid');
+            districtInput.classList.remove('valid');
+            return;
         }
-        return false;
-      }
 
-      const districtId = locationsMap[selectedBarangay];
-      if (districtId) {
-        districtInput.value = "District " + districtId;
-        districtIdInput.value = districtId;
-        if(errorSpan) errorSpan.textContent = '';
-        districtInput.classList.add('valid');
-        districtInput.classList.remove('invalid');
-      } else {
-        districtInput.value = '';
-        districtIdInput.value = '';
-        if (showError && errorSpan) {
-          errorSpan.textContent = 'Invalid district for selected barangay';
-          districtInput.classList.add('invalid');
-          districtInput.classList.remove('valid');
+        const districtId = locationsMap[selected];
+        if(districtId){
+            districtInput.value = "District " + districtId;
+            districtIdInput.value = districtId;
+            errorSpan.textContent = '';
+            districtInput.classList.add('valid');
+            districtInput.classList.remove('invalid');
         } else {
-          districtInput.classList.remove('invalid','valid');
-          if(errorSpan) errorSpan.textContent = '';
+            districtInput.value = '';
+            districtIdInput.value = '';
+            errorSpan.textContent = 'Invalid district for selected barangay';
+            districtInput.classList.add('invalid');
+            districtInput.classList.remove('valid');
         }
-      }
     }
 
-    // --- Event listeners ---
-    barangaySelect.addEventListener('change', () => {
-      barangayTouched = true; // mark as touched
-      updateDistrict();
-      validateField(barangaySelect);
-      validateField(districtInput);
-      validateAll();
-    });
-
-    courseSelect.addEventListener('change', () => {
-      const selectedOption = courseSelect.options[courseSelect.selectedIndex];
-      collegeInput.value = selectedOption ? selectedOption.dataset.college || '' : '';
-      validateAll();
-    });
-
-    // --- Validation rules ---
     const rules = {
-      full_name: v => v.trim() !== '' && /^[A-Za-z\s\-.,]+$/.test(v) ? true : 'Invalid full name',
-      id_number: v => /^\d{6,7}$/.test(v.trim()) ? true : 'ID must be 6-7 digits',
-      course: v => v !== '' ? true : 'Please select a course',
-      year_level: v => /^[1-6]$/.test(v.trim()) ? true : 'Year must be 1-6',
-      contact_number: v => /^(09|\+639)\d{9}$/.test(v.trim()) ? true : 'Invalid PH number',
-      emergency_contact: v => /^(09|\+639)\d{9}$/.test(v.trim()) ? true : 'Invalid PH number',
-      email: v => /^[a-zA-Z0-9._%+-]+@(gmail\.com|adzu\.edu\.ph)$/.test(v.trim()) ? true : 'Must be @gmail.com or @adzu.edu.ph',
-      fb_messenger: v => {
-        if(!v || !v.trim()) return true;
-        try {
-          const url = new URL(v.trim());
-          if(!['http:','https:'].includes(url.protocol)) return 'URL must start with http:// or https://';
-          if(!url.hostname.includes('facebook.com')) return 'URL should be a Facebook link';
-          return true;
-        } catch {
-          return 'Must be a valid URL like https://www.facebook.com/username';
-        }
-      },
-      barangay: v => {
-        if(!v || v.trim()==='') return 'Please select a barangay';
-        if(!locationsMap[v.trim()]) return 'Invalid barangay';
-        return true;
-      },
-      district: v => {
-        const barangay = barangaySelect.value.trim();
-        const districtId = districtIdInput.value.trim();
-        if (!barangay) return 'District depends on Barangay selection';
-        if (!districtId) return 'Invalid district for selected barangay';
-        return true;
-      }
+        full_name: v => v.trim()!=='' && /^[A-Za-z\s\-.,]+$/.test(v) ? true : 'Invalid full name',
+        id_number: v => /^\d{6,7}$/.test(v.trim()) ? true : 'ID must be 6-7 digits',
+        course: v => v!=='' ? true : 'Please select a course',
+        year_level: v => /^[1-4]$/.test(v.trim()) ? true : 'Year must be 1-4',
+        contact_number: v => /^(09|\+639)\d{9}$/.test(v.trim()) ? true : 'Invalid PH number',
+        emergency_contact: v => /^(09|\+639)\d{9}$/.test(v.trim()) ? true : 'Invalid PH number',
+        email: v => /^[a-zA-Z0-9._%+-]+@(gmail\.com|adzu\.edu\.ph)$/.test(v.trim()) ? true : 'Must be @gmail.com or @adzu.edu.ph',
+        fb_messenger: v => {
+            if(!v || !v.trim()) return true;
+            try {
+                const url = new URL(v.trim());
+                if(!['http:','https:'].includes(url.protocol)) return 'URL must start with http:// or https://';
+                if(!url.hostname.includes('facebook.com')) return 'URL should be a Facebook link';
+                return true;
+            } catch { return 'Must be a valid URL like https://www.facebook.com/username'; }
+        },
+        barangay: v => {
+            if(!v || v.trim()==='') return 'Please select a barangay';
+            if(!locationsMap[v.trim()]) return 'Invalid barangay';
+            return true;
+        },
+        district: v => {
+            const barangay = barangaySelect.value.trim();
+            const districtId = districtIdInput.value.trim();
+            if(!barangay) return 'District depends on Barangay selection';
+            if(!districtId) return 'Invalid district for selected barangay';
+            return true;
+        },
+        class_schedule: v => true // hidden, no validation needed
     };
 
-    // --- Validation functions ---
     function validateField(input){
-      if(!rules[input.id]) return true;
-      const val = input.value;
-      const errorSpan = document.getElementById(input.id+'-error');
-      const res = rules[input.id](val);
-
-      if(res !== true){
-        input.classList.remove('valid');
-        input.classList.add('invalid');
-        if(errorSpan){
-          errorSpan.textContent = res;
-          errorSpan.style.display = 'block';
+        if(!rules[input.id]) return true;
+        const res = rules[input.id](input.value);
+        const errorSpan = document.getElementById(input.id+'-error');
+        if(res!==true){
+            input.classList.add('invalid');
+            input.classList.remove('valid');
+            if(errorSpan) { errorSpan.textContent=res; errorSpan.style.display='block'; }
+            return false;
+        } else {
+            input.classList.remove('invalid');
+            input.classList.add('valid');
+            if(errorSpan){ errorSpan.textContent=''; errorSpan.style.display='none'; }
+            return true;
         }
-        return false;
-      } else {
-        input.classList.remove('invalid');
-        input.classList.add('valid');
-        if(errorSpan){
-          errorSpan.textContent = '';
-          errorSpan.style.display = 'none';
-        }
-        return true;
-      }
     }
 
     function validateAll(){
-      let allValid = true;
-      document.querySelectorAll('.volunteer-info input, .volunteer-info select').forEach(input=>{
-        if(rules[input.id] && !validateField(input)) allValid=false;
-      });
-      saveBtn.disabled = !allValid;
-      saveBtn.classList.toggle('enabled', allValid);
-      return allValid;
+        let allValid = true;
+        document.querySelectorAll('.volunteer-info input, .volunteer-info select').forEach(input=>{
+            if(rules[input.id] && !validateField(input)) allValid=false;
+        });
+        saveBtn.disabled = !allValid;
+        saveBtn.classList.toggle('enabled', allValid);
+        return allValid;
     }
 
     document.querySelectorAll('.volunteer-info input, .volunteer-info select').forEach(input=>{
-      ['input','change','blur'].forEach(evt => input.addEventListener(evt, validateAll));
+        ['input','change','blur'].forEach(evt=>input.addEventListener(evt, validateAll));
     });
 
-    // --- Open / Close modal ---
+    barangaySelect.addEventListener('change', ()=>{ updateDistrict(); validateAll(); });
+    courseSelect.addEventListener('change', ()=>{
+        const opt = courseSelect.options[courseSelect.selectedIndex];
+        collegeInput.value = opt ? opt.dataset.college||'' : '';
+        validateAll();
+    });
+
     window.openEditVolunteerModal = function(type, index){
-      barangayTouched = false; // reset on open
-      const volunteer = (window.volunteersData[type] || [])[index] || {};
+        const volunteer = (window.volunteersData[type]||[])[index]||{};
+        Object.keys(rules).forEach(key=>{
+            const input=document.getElementById(key);
+            if(!input) return;
+            if(key==='barangay'){
+                input.value = volunteer[key] && locationsMap[volunteer[key]] ? volunteer[key] : '';
+            } else input.value = volunteer[key] || '';
+            if(input.tagName==='SELECT'){
+                const opt = Array.from(input.options).find(o=>o.value===input.value);
+                if(opt) input.value = opt.value;
+            }
+        });
 
-      Object.keys(rules).forEach(key=>{
-        const input = document.getElementById(key);
-        if(!input) return;
-
-        if(key==='barangay'){
-          input.value = volunteer[key] && locationsMap[volunteer[key]] ? volunteer[key] : '';
-        } else {
-          input.value = volunteer[key] || '';
+        const selectedCourse = Array.from(courseSelect.options).find(o=>o.value===volunteer.course);
+        if(selectedCourse){ 
+            courseSelect.value = selectedCourse.value; 
+            collegeInput.value = selectedCourse.dataset.college||''; 
         }
 
-        if(input.tagName==='SELECT'){
-          const opt = Array.from(input.options).find(o => o.value===input.value);
-          if(opt) input.value = opt.value;
-        }
-      });
+        updateDistrict();
+        validateAll();
 
-      const selectedCourse = Array.from(courseSelect.options).find(o => o.value===volunteer.course);
-      if(selectedCourse){
-        courseSelect.value = selectedCourse.value;
-        collegeInput.value = selectedCourse.dataset.college || '';
-      }
+        const routeTemplate = "{{ route('volunteer.import.update-entry', ['index' => '__INDEX__', 'type' => '__TYPE__']) }}";
+        form.action = routeTemplate.replace('__INDEX__', index).replace('__TYPE__', type);
 
-      updateDistrict();
-      validateAll();
-
-      const routeTemplate = "{{ route('volunteer.import.update-entry', ['index' => '__INDEX__', 'type' => '__TYPE__']) }}";
-      form.action = routeTemplate.replace('__INDEX__', index).replace('__TYPE__', type);
-
-      modal.classList.add('is-open');
-      document.documentElement.style.overflow='hidden';
-      document.body.style.overflow='hidden';
+        modal.classList.add('is-open');
+        document.documentElement.style.overflow='hidden';
+        document.body.style.overflow='hidden';
     };
 
     window.closeEditVolunteerModal = function(){
-      modal.classList.remove('is-open');
-      document.documentElement.style.overflow='';
-      document.body.style.overflow='';
+        modal.classList.remove('is-open');
+        document.documentElement.style.overflow=''; 
+        document.body.style.overflow='';
     };
 
     modal.querySelector('.modal-overlay').addEventListener('click', e=>{
-      if(e.target===modal.querySelector('.modal-overlay')) closeEditVolunteerModal();
+        if(e.target===modal.querySelector('.modal-overlay')) closeEditVolunteerModal();
     });
 
     document.addEventListener('keydown', e=>{
-      if(modal.classList.contains('is-open') && e.key==='Escape') closeEditVolunteerModal();
+        if(modal.classList.contains('is-open') && e.key==='Escape') closeEditVolunteerModal();
     });
 
     form.addEventListener('submit', e=>{
-      if(!validateAll()) e.preventDefault();
+        if(!validateAll()) e.preventDefault();
     });
 
-  })();
+})();
 </script>
