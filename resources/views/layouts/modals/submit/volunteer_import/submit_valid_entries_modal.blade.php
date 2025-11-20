@@ -28,27 +28,31 @@
         </div>
     </div>
 </div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('modalSubmit');
     const openModalBtn = document.getElementById('openSubmitModalBtn');
     const confirmBtn = document.getElementById('confirmSubmitBtn');
     const cancelBtn = document.getElementById('cancelSubmitBtn');
-    const validForm = document.querySelector('#import-Section-valid form');
+
+    // ⭐ FIXED FORM SELECTOR (your old selector was invalid)
+    const validForm = document.getElementById('import-Section-valid')?.querySelector('form');
 
     const errorModal = document.getElementById('errorModal');
     const errorMessageBox = document.getElementById('errorModalMessage');
     const closeErrorBtn = document.getElementById('closeErrorModal');
 
+    // Stop JS if form or button missing
     if (!openModalBtn || !validForm) return;
 
-    // Utility: get all valid table checkboxes
     const getTableCheckboxes = () =>
         document.querySelectorAll('#valid-entries-table tbody input[name="selected_valid[]"]');
+
     const getCheckedTableCheckboxes = () =>
         document.querySelectorAll('#valid-entries-table tbody input[name="selected_valid[]"]:checked');
 
-    // Backend duplicate check
+    // Backend DB duplicate check
     const checkDuplicatesBackend = async (ids) => {
         try {
             const response = await fetch("/check-duplicates", {
@@ -59,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({ ids })
             });
-            return await response.json(); // expects { duplicates: [...] }
+            return await response.json();
         } catch (err) {
             console.error('Error checking duplicates:', err);
             return { duplicates: [] };
@@ -79,65 +83,94 @@ document.addEventListener('DOMContentLoaded', () => {
         const checked = getCheckedTableCheckboxes();
         if (checked.length === 0) checkboxes.forEach(cb => cb.checked = true);
 
-        // Step 1: Check invalid entries
+        // STEP 1 — BLOCK IF INVALID ENTRIES EXIST
         const invalidCheckboxes = document.querySelectorAll('#invalid-entries-table tbody input[type="checkbox"]');
         if (invalidCheckboxes.length > 0) {
             confirmBtn.disabled = true;
             modal.querySelector('#modalSubmitCount').innerHTML =
-                `⚠️ <span style="color:#dc3545; font-weight:600;">${invalidCheckboxes.length} invalid entr${invalidCheckboxes.length > 1 ? 'ies' : 'y'}</span> still exist. Please fix them first.`;
+                `⚠️ <span style="color:#dc3545; font-weight:600;">${invalidCheckboxes.length} invalid entr${invalidCheckboxes.length > 1 ? 'ies' : 'y'}</span> still exist. Fix them first.`;
             modal.classList.add('active');
             return;
         }
 
-        // Step 2: Backend duplicate check
-        const ids = Array.from(getCheckedTableCheckboxes())
-            .map(cb => cb.dataset.idNumber?.trim())
-            .filter(id => id);
+        // STEP 2 — COLLECT ID NUMBERS
+        const selectedCbs = Array.from(getCheckedTableCheckboxes());
+        const ids = selectedCbs.map(cb => cb.dataset.idNumber?.trim() || "");
 
-        if (ids.length === 0) {
-            errorMessageBox.textContent = "No valid IDs found for submission.";
+        // A1 — Missing ID_NUMBER
+        for (let cb of selectedCbs) {
+            const id = cb.dataset.idNumber?.trim();
+            const row = cb.closest("tr");
+            const rowNumber = row ? row.children[1].textContent : "Unknown";
+
+            if (!id) {
+                errorMessageBox.innerHTML =
+                    `❌ Missing School ID in row <strong>${rowNumber}</strong>.`;
+                errorModal.classList.add('active');
+                return;
+            }
+        }
+
+        // B1 — Detect local duplicates
+        const duplicatesLocal = ids.filter((id, idx) => ids.indexOf(id) !== idx);
+
+        if (duplicatesLocal.length > 0) {
+            errorMessageBox.innerHTML =
+                `❌ Duplicate School ID(s) found in selection: <strong>${[...new Set(duplicatesLocal)].join(', ')}</strong>.`;
             errorModal.classList.add('active');
             return;
         }
 
+        // STEP 3 — BACKEND DB DUPLICATE CHECK
         confirmBtn.disabled = true;
         modal.querySelector('#modalSubmitCount').innerHTML = "Checking for duplicates...";
 
         const result = await checkDuplicatesBackend(ids);
-        const duplicates = result.duplicates.map(id => id.toString().trim());
+        const duplicatesDB = result.duplicates.map(id => id.toString().trim());
 
-        // Automatically uncheck duplicates
-        duplicates.forEach(id => {
+        // Uncheck duplicate rows if any
+        duplicatesDB.forEach(id => {
             const cb = document.querySelector(`#valid-entries-table tbody input[data-id-number="${id}"]`);
             if (cb) cb.checked = false;
         });
 
-        if (duplicates.length > 0) {
+        if (duplicatesDB.length > 0) {
             errorMessageBox.innerHTML =
-                `❌ The following ID number${duplicates.length > 1 ? 's' : ''} already exist in the database: <strong>${duplicates.join(', ')}</strong>`;
+                `❌ These School ID(s) already exist in the database:<br><strong>${duplicatesDB.join(', ')}</strong>`;
             errorModal.classList.add('active');
             confirmBtn.disabled = true;
             return;
         }
 
-        // Step 3: All clear - show submit modal
-        const nonDuplicateIds = Array.from(getCheckedTableCheckboxes())
-            .map(cb => cb.dataset.idNumber?.trim())
-            .filter(id => id);
+        // STEP 4 — READY TO SUBMIT
+        const finalSelected = Array.from(getCheckedTableCheckboxes());
+
+        const totalSelected = finalSelected.length;
+
+        if (totalSelected === 0) {
+            errorMessageBox.innerHTML = "❌ No entries left to submit after duplicate filtering.";
+            errorModal.classList.add('active');
+            return;
+        }
+
+        // Success message
+        modal.querySelector('#modalSubmitCount').innerHTML =
+            `Submit <span style="color:#28a745; font-weight:600;">${totalSelected}</span> verified entr${totalSelected > 1 ? 'ies' : 'y'} to the database?`;
 
         confirmBtn.disabled = false;
-        modal.querySelector('#modalSubmitCount').innerHTML =
-            `Are you sure you want to submit <span style="color:#28a745; font-weight:600;">${nonDuplicateIds.length} verified entr${nonDuplicateIds.length > 1 ? 'ies' : 'y'}</span> to the database?`;
         modal.classList.add('active');
     };
 
-    // Event listeners
+    // Event Listeners
     openModalBtn.addEventListener('click', handleOpenModal);
+
     cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
+
     confirmBtn.addEventListener('click', () => {
         if (confirmBtn.disabled) return;
 
         const checked = getCheckedTableCheckboxes();
+
         if (checked.length === 0) {
             errorMessageBox.textContent = "No entries selected to submit.";
             errorModal.classList.add('active');
@@ -153,4 +186,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-

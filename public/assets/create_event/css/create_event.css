@@ -1,0 +1,562 @@
+/* ---------- Base / Reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh;
+  background: #f7f7f7;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+}
+
+.Wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Center vertically within viewport minus navbar */
+  justify-content: center;
+  flex: 1;            /* fill remaining space */
+  padding: 1.5rem 0;  
+}
+
+/* ---------- Card / Section ---------- */
+.edit-section {
+  width: clamp(360px, 95%, 1100px);
+  background: #fff;
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.25);
+  margin: 1rem auto;
+  opacity:1;
+}
+
+.edit-section h2 {
+  margin-bottom: 1.5rem;
+  font-size: clamp(1.2rem, 2.8vw, 1.8rem);
+  color: #c41e3a;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ---------- Input Grid ---------- */
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.volunteer-info {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.volunteer-info input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 1rem;
+  background: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.volunteer-info input:hover {
+  background: #f3f4f6; /* slightly darker */
+  border-color: #B2000C; /* optional subtle highlight */
+}
+
+/* Focus effect */
+.volunteer-info input:focus {
+  border-color: #702626;
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+/* ---------- Date-Time Input Custom Style ---------- */
+.datetime-input::-webkit-calendar-picker-indicator {
+  filter: invert(24%) sepia(95%) saturate(6805%) hue-rotate(348deg) brightness(95%) contrast(101%);
+}
+
+
+/* === Sort Options Dropdown === */
+.sort-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.custom-select {
+  position: relative;
+  flex: 1 1 48%;
+  min-width: 160px;
+  cursor: pointer;
+}
+
+/* Trigger button */
+.volunteer-info .custom-select-trigger {
+  background: #f9f9f9;       /* same as input background */
+  border: 1px solid #ccc;    /* same as input border */
+  font-size: 1rem;
+  padding: 0.75rem 1rem;     /* match input padding */
+  border-radius: 8px;        /* match input border-radius */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s ease;
+}
+
+/* Darken on hover only */
+.volunteer-info .custom-select-trigger:hover {
+  background: #e6e6e6;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.08);
+  border-color: #B2000C;     /* subtle focus indicator */
+}
+
+/* Dropdown options */
+.custom-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 2px solid #c00;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 999;
+}
+
+.custom-select.open .custom-options {
+  display: block;
+}
+
+/* Scrollbar styling */
+.custom-options::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-options::-webkit-scrollbar-thumb {
+  background-color: #c00;
+  border-radius: 3px;
+}
+
+/* Individual option */
+.custom-option {
+  display: block;
+  padding: 8px;
+  transition: background 0.15s ease;
+}
+
+.custom-option:hover {
+  background: #c00;
+  color: #fff;
+}
+
+
+/* Icon */
+.icon { font-size: 20px; color: #b30000; transition: transform 0.3s ease, color 0.3s ease; }
+.volunteer-info:hover .icon { transform: rotate(-10deg); color: #e60000; }
+
+.organizer-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.organizer-container.initial {
+  margin-top: 1rem;
+}
+
+.organizer-container .icon {
+  font-size: 20px;
+  color: #b30000;
+  flex-shrink: 0;
+}
+
+.organizer-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+.organizer-input:focus {
+  border-color: #702626;
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.add-organizer-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  background: #c73c46;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.add-organizer-btn:hover {
+  background: #8f000a;
+  transform: scale(1.05);
+}
+
+.remove-organizer-btn {
+  background: #e60000;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 10px;
+}
+
+.remove-organizer-btn:hover {
+  background: #8f000a;
+  transform: scale(1.1);
+}
+
+/* ---------- Description Box ---------- */
+.description-box {
+  margin: 1.5rem 0 2rem 0;   /* more spacing around it */
+  width: 100%;
+}
+
+.description-box textarea {
+  width: 100%;
+  min-height: 100px;        /* smaller default height */
+  max-height: 160px;        /* reasonable max height */
+  resize: vertical;         /* allow user to expand vertically */
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;       /* slightly smaller font */
+  background: #f9f9f9;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.description-box textarea:focus {
+  border-color: #702626;
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.description-box textarea:focus {
+  border-color: #702626;
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+/* ---------- Submit / Buttons ---------- */
+.submit-section {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding-bottom: 1rem;
+  flex-shrink: 0;
+}
+
+.submit-section button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  background-color: #c73c46; /* main red */
+  color: #fff;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.3s ease,
+              box-shadow 0.25s ease;
+}
+
+/* Hover effect: lift + scale + shadow */
+.submit-section button:hover {
+  background-color: #8f000a; /* slightly darker red */
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+/* Active (pressed) state */
+.submit-section button:active {
+  background-color: #6b0007; /* darkest red */
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+/* Optional: focus for accessibility */
+.submit-section button:focus {
+  outline: 3px solid #ffd43b; /* gold/yellow */
+  outline-offset: 3px;
+}
+
+/* ---------- Custom Select Dropdown ---------- */
+.custom-select { position: relative; flex: 1; min-width: 150px; cursor: pointer; }
+.custom-select-trigger {
+  background: #f0f0f0;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+.custom-select-trigger:hover { background: #e6e6e6; }
+.custom-select.open .custom-select-trigger { border-color: #B2000C; }
+
+.custom-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 2px solid #c00;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 999;
+}
+.custom-select.open .custom-options { display: block; }
+.custom-option { padding: 8px; transition: background 0.15s ease; }
+.custom-option:hover { background: #c00; color: #fff; }
+
+/* Modal Wrapper - hidden by default */
+.modal-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 200000;
+  display: none; /* hidden by default */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Modal Overlay */
+.modal-wrapper .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.2); /* semi-transparent behind modal */
+  display: flex; /* flex to center modal content */
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Modal Content Box */
+.modal-wrapper .modal-content {
+  background: #ffffff; /* solid white */
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  transform: translateY(-50px);
+  opacity: 1; /* fully visible */
+  animation: slideDown 0.3s ease forwards;
+  color: #cf3535;
+  z-index: 999999; 
+  font-size: 1.5rem;
+}
+
+
+
+/* Buttons inside modal */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.modal-btn {
+  padding: 0.5rem 1.2rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+.modal-btn.confirm {
+  background-color: #B2000C;
+  color: #fff;
+}
+
+.modal-btn.confirm:hover {
+  background-color: #8f000a;
+  transform: scale(1.1);
+}
+
+.modal-btn.cancel {
+  background-color: #ccc;
+  color: #333;
+}
+
+.modal-btn.cancel:hover {
+  background-color: #999;
+  transform: scale(1.1);
+}
+
+  .volunteer-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.volunteer-info .icon {
+  font-size: 20px;
+  color: #b30000;
+}
+
+#organizers-wrapper {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.organizer-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.organizer-input {
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  min-width: 150px;
+}
+
+.organizer-input:focus {
+  border-color: #702626;
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.add-organizer-btn,
+.remove-organizer-btn {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.add-organizer-btn {
+  background: #c73c46;
+}
+
+.add-organizer-btn:hover {
+  background: #8f000a;
+  transform: scale(1.05);
+}
+
+.remove-organizer-btn {
+  background: #e60000;
+}
+
+.remove-organizer-btn:hover {
+  background: #8f000a;
+  transform: scale(1.1);
+}
+
+/* Tablet and smaller (max-width: 992px) */
+@media (max-width: 992px) {
+
+  /* Organizer adjustments */
+  #organizers-wrapper {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .organizer-row {
+    display: flex;
+    align-items: center;  /* keep input + buttons on same line */
+    gap: 0.4rem;
+  }
+
+  .organizer-input {
+    flex: 1 1 auto;       /* allow input to shrink */
+    min-width: 150px;     /* minimum width to avoid collapse */
+    font-size: 0.95rem;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .add-organizer-btn,
+  .remove-organizer-btn {
+    flex: 0 0 auto;       /* buttons keep natural size */
+    padding: 0.45rem 0.75rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Mobile (max-width: 768px) */
+@media (max-width: 768px) {
+  .edit-section {
+    width: 95%;
+    padding: 1rem;
+    margin-top: 50px; /* added space for header */
+    margin-bottom: 50px; /* added space for header */
+  }
+
+  .input-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .volunteer-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .volunteer-info .icon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .custom-select,
+  .volunteer-info input {
+    width: 100%;
+  }
+
+  .description-box textarea {
+    min-height: 180px;
+  }
+
+  .submit-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .submit-section button {
+    width: 100%;
+    font-size: 1rem;
+  }
+}

@@ -1,68 +1,68 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\HomePageController;
 use App\Http\Controllers\VolunteerImportController;
 
-// Default root redirects to login
 Route::get('/', function () {
     return redirect()->route('auth.login');
 });
 
-// Authentication
+/* ------------------ AUTH ROUTES (PUBLIC) ------------------ */
 Route::get('/login', [AuthController::class, 'showLogin'])->name('auth.login');
 Route::post('/login', [AuthController::class, 'login'])->name('auth.login.submit');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('auth.register');
 Route::post('/register', [AuthController::class, 'register'])->name('auth.register.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+/* ------------------ PROTECTED ROUTES (ADMIN ONLY) ------------------ */
+Route::middleware(['auth:admin'])->group(function () {
 
-// Homepage
-Route::get('/home', [HomePageController::class, 'index'])->name('home');
+    Route::get('/home', [HomePageController::class, 'index'])->name('home');
 
-// Volunteer Import routes (temporary-session based)
-Route::prefix('volunteer-import')->group(function () {
-    // Route to go to volunteer-import page
-    Route::get('/', [VolunteerImportController::class, 'index'])->name('volunteer.import.index');
+    Route::prefix('volunteer-import')->group(function () {
 
-    // Show Import (Invalid, Valid, Import Logs)
-    Route::post('/preview', [VolunteerImportController::class, 'preview'])->name('volunteer.import.preview');
-    
-    // Save Valid Volunteer to DB
-    Route::post('/validate-save', [VolunteerImportController::class, 'validateAndSave'])->name('volunteer.import.validateSave');
+        Route::get('/', [VolunteerImportController::class, 'index'])->name('volunteer.import.index');
 
-    // Update Invalid/Valid Volunteer
-    Route::post('/clear-invalid', [VolunteerImportController::class, 'clearInvalid'])->name('volunteer.import.clearInvalid');
+        Route::post('/preview', [VolunteerImportController::class, 'preview'])->name('volunteer.import.preview');
 
-    // Reset CSV File Import
-    Route::post('/reset', [VolunteerImportController::class, 'resetImports'])->name('volunteer.import.reset');
+        Route::post('/validate-save', [VolunteerImportController::class, 'validateAndSave'])
+            ->name('volunteer.import.validateSave');
 
-    // Move Invalid to Valid
-    Route::post('/move-invalid', [VolunteerImportController::class, 'moveInvalidToValid'])->name('volunteer.import.moveInvalidToValid');
+        Route::post('/clear-invalid', [VolunteerImportController::class, 'clearInvalid'])
+            ->name('volunteer.import.clearInvalid');
 
-    // Update Invalid/Valid Volunteer
-    Route::put('/volunteer-import/volunteer/update-entry/{index}/{type}', [VolunteerImportController::class, 'updateVolunteerEntry'])->name('volunteer.import.update-entry');
+        Route::post('/reset', [VolunteerImportController::class, 'resetImports'])
+            ->name('volunteer.import.reset');
 
-    // Move Valid to Invalid
-    Route::get('/move-valid-to-invalid/{index}', [VolunteerImportController::class, 'moveValidToInvalid'])->name('volunteer.moveValidToInvalid');
+        Route::post('/move-invalid', [VolunteerImportController::class, 'moveInvalidToValid'])
+            ->name('volunteer.import.moveInvalidToValid');
 
-    // Delete selected invalid entries
-    Route::post('/volunteer/delete-entries', [VolunteerImportController::class, 'deleteEntries'])->name('volunteer.deleteEntries');
+        Route::put('/volunteer-import/volunteer/update-entry/{index}/{type}', 
+            [VolunteerImportController::class, 'updateVolunteerEntry'])
+            ->name('volunteer.import.update-entry');
 
-    // Undo Delete selected invalid entries
-    Route::get('/volunteer-import/undo-delete', [VolunteerImportController::class, 'undoDelete'])->name('volunteer.import.undo-delete');
+        Route::get('/move-valid-to-invalid/{index}', 
+            [VolunteerImportController::class, 'moveValidToInvalid'])
+            ->name('volunteer.moveValidToInvalid');
 
-    // Edit Class Schedule
-    Route::put('/volunteers/{id}/update-schedule', [VolunteerImportController::class, 'updateSchedule'])->name('volunteer.update-schedule');
+        Route::post('/volunteer/delete-entries', 
+            [VolunteerImportController::class, 'deleteEntries'])
+            ->name('volunteer.deleteEntries');
 
-   Route::post('/check-duplicates', function(Request $request) {
-    $ids = $request->input('ids', []);
-    $duplicates = \App\Models\VolunteerProfile::whereIn('id_number', $ids)
-                    ->pluck('id_number')
-                    ->toArray();
+        Route::get('/volunteer-import/undo-delete', 
+            [VolunteerImportController::class, 'undoDelete'])
+            ->name('volunteer.import.undo-delete');
 
-    return response()->json(['duplicates' => $duplicates]);
-});
+        Route::put('/volunteers/{id}/update-schedule', 
+            [VolunteerImportController::class, 'updateSchedule'])
+            ->name('volunteer.update-schedule');
 
+        // ✔ Use your controller's duplicate check, not closure
+        Route::post('/check-duplicates', 
+            [VolunteerImportController::class, 'checkDuplicates'])
+            ->name('volunteer.import.checkDuplicates');
+    });
 });

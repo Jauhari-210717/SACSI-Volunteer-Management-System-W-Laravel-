@@ -20,7 +20,9 @@ class FactLog extends Model
         'action',
         'details',
         'timestamp',
+        'import_id',
     ];
+
 
     protected $casts = [
         'timestamp' => 'datetime',

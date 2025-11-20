@@ -31,10 +31,4 @@ class Location extends Model
     {
         return $this->hasMany(Event::class, 'location_id', 'location_id');
     }
-
-    // Relation: Location logs
-    public function locationLogs()
-    {
-        return $this->hasMany(LocationLog::class, 'location_id', 'location_id');
-    }
 }

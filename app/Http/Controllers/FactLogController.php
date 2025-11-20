@@ -2,22 +2,21 @@
 
 namespace App\Http\Controllers;
 
-
 use Illuminate\Http\Request;
-use App\Models\Volunteer;
-use App\Models\VolunteerProfile;
+use Illuminate\Support\Facades\Auth;
+use App\Models\FactLog;
 
 class FactLogController extends Controller
 {
     /**
      * Log an action into fact_logs
      *
-     * @param string $factTypeName Name of the fact type (e.g., 'Volunteer Created', 'Import Verified')
-     * @param string|null $entityType e.g., 'Volunteer'
-     * @param int|null $entityId ID of the entity
-     * @param string|null $action e.g., 'created', 'updated'
-     * @param string|null $details Optional description/details
-     * @param int|null $importId Optional import log ID
+     * @param string $factTypeName
+     * @param string|null $entityType
+     * @param int|null $entityId
+     * @param string|null $action
+     * @param string|null $details
+     * @param int|null $importId (unused but kept for compatibility)
      */
     public function logAction(
         string $factTypeName, 
@@ -27,38 +26,31 @@ class FactLogController extends Controller
         ?string $details = null, 
         ?int $importId = null
     ): void {
+
         $admin = Auth::guard('admin')->user();
 
-        // Ensure fact type exists or create it
-        $factType = FactType::firstOrCreate(
-            ['type_name' => $factTypeName],
-            ['description' => $factTypeName]
-        );
-
-        // Create the fact log
+        // FACT TYPE MODEL REMOVED — using entity_type + action instead
         FactLog::create([
-            'fact_type_id' => $factType->fact_type_id,
-            'admin_id' => $admin?->admin_id,
-            'import_id' => $importId,
-            'entity_type' => $entityType,
-            'entity_id' => $entityId,
-            'action' => $action,
-            'details' => $details,
-            'logged_at' => now(),
+            'admin_id'    => $admin?->admin_id,
+            'entity_type' => $entityType ?? $factTypeName, // fallback so nothing breaks
+            'entity_id'   => $entityId,
+            'action'      => $action ?? $factTypeName,
+            'details'     => $details,
+            'timestamp'   => now(),
         ]);
     }
 
     /**
-     * Display a paginated list of logs with optional filters
+     * Display list of logs (updated to no longer use factType relation)
      */
     public function index(Request $request)
     {
-        $query = FactLog::with(['factType', 'admin']);
+        $query = FactLog::with(['admin']); // factType removed
 
+        // fact_type filter REMOVED because table no longer has fact_type_id
+        // but keep entity_type filter since it's now your category system
         if ($request->filled('fact_type')) {
-            $query->whereHas('factType', fn($q) =>
-                $q->where('type_name', 'like', '%' . $request->fact_type . '%')
-            );
+            $query->where('entity_type', 'like', '%' . $request->fact_type . '%');
         }
 
         if ($request->filled('admin_id')) {
@@ -66,14 +58,15 @@ class FactLogController extends Controller
         }
 
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('details', 'like', '%' . $request->search . '%')
-                  ->orWhere('action', 'like', '%' . $request->search . '%')
-                  ->orWhere('entity_type', 'like', '%' . $request->search . '%');
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('details', 'like', "%$search%")
+                  ->orWhere('action', 'like', "%$search%")
+                  ->orWhere('entity_type', 'like', "%$search%");
             });
         }
 
-        $logs = $query->orderBy('logged_at', 'desc')->paginate(20);
+        $logs = $query->orderBy('timestamp', 'desc')->paginate(20);
 
         return view('fact_logs.index', compact('logs'));
     }
@@ -92,7 +85,7 @@ class FactLogController extends Controller
 
         $log->delete();
 
-        // Log the deletion action
+        // Still logs the deletion action with no changes needed
         $this->logAction(
             'Fact Log Management',
             'fact_logs',
