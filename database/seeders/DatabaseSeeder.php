@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             LocationsTableSeeder::class,
             CoursesTableSeeder::class,
             AdminAccountsSeeder::class,
+            EventTypesTableSeeder::class,
         ]);
     }
 }

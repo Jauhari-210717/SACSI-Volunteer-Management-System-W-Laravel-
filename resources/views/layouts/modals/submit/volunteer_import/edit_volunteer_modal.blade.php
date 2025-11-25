@@ -430,11 +430,68 @@ const locationsMap = @json($locationsMap);
     const courseSelect = document.getElementById('course');
     const collegeInput = document.getElementById('college');
 
+    /* ------------------------------------------------------------------
+       ⭐ STRICT + SMART CLASS SCHEDULE NORMALIZER (NEW PATCH)
+       ------------------------------------------------------------------ */
+    function normalizeClassSchedule(raw) {
+        if (!raw) return "";
+
+        let val = raw.toString().trim();
+
+        // Clean sloppy input
+        val = val.replace(/\s*/g, "");
+        val = val.replace(/–/g, "-");
+        val = val.replace(/to/gi, "-");
+
+        let parts = val.split("-");
+        if (parts.length !== 2) return raw;
+
+        function norm(t) {
+            if (/^\d{1,2}$/.test(t)) return `${t}:00`;
+            if (/^\d{3,4}$/.test(t)) {
+                let h = t.slice(0, -2);
+                let m = t.slice(-2);
+                return `${parseInt(h)}:${m}`;
+            }
+            if (/^\d{1,2}:$/.test(t)) return `${t}00`;
+            return t;
+        }
+
+        let start = norm(parts[0]);
+        let end   = norm(parts[1]);
+
+        function toMin(str) {
+            let [h, m] = str.split(":").map(Number);
+            return h * 60 + m;
+        }
+
+        let sMin = toMin(start);
+        let eMin = toMin(end);
+        let diff = eMin - sMin;
+
+        // Allowed durations: 80min or 180min
+        if (diff === 80 || diff === 180) {
+            return `${start}-${end}`;
+        }
+
+        // Snap to nearest valid block (80 or 180)
+        const d80  = sMin + 80;
+        const d180 = sMin + 180;
+
+        let target = Math.abs(d80 - eMin) < Math.abs(d180 - eMin) ? d80 : d180;
+
+        let endH = Math.floor(target / 60);
+        let endM = String(target % 60).padStart(2, "0");
+
+        return `${start}-${endH}:${endM}`;
+    }
+    /* ------------------------------------------------------------------ */
+
     function updateDistrict() {
         const selected = barangaySelect.value.trim();
         const errorSpan = document.getElementById('district-error');
 
-        if (!selected) {
+        if(!selected){
             districtInput.value = '';
             districtIdInput.value = '';
             errorSpan.textContent = 'District depends on Barangay selection';
@@ -444,24 +501,12 @@ const locationsMap = @json($locationsMap);
         }
 
         const districtId = locationsMap[selected];
-
-        if (districtId) {
-
-            // ✅ PATCH: Prevent false "Updated District X"
-            const current = districtInput.value.trim();
-            const expected = String(districtId);
-
-            // Only update if different
-            if (current !== expected) {
-                districtInput.value = expected;
-            }
-
-            districtIdInput.value = expected;
-
+        if(districtId){
+            districtInput.value = "District " + districtId;
+            districtIdInput.value = districtId;
             errorSpan.textContent = '';
             districtInput.classList.add('valid');
             districtInput.classList.remove('invalid');
-
         } else {
             districtInput.value = '';
             districtIdInput.value = '';
@@ -500,7 +545,7 @@ const locationsMap = @json($locationsMap);
             if(!districtId) return 'Invalid district for selected barangay';
             return true;
         },
-        class_schedule: v => true 
+        class_schedule: v => true // hidden
     };
 
     function validateField(input){
@@ -510,7 +555,7 @@ const locationsMap = @json($locationsMap);
         if(res!==true){
             input.classList.add('invalid');
             input.classList.remove('valid');
-            if(errorSpan){ errorSpan.textContent=res; errorSpan.style.display='block'; }
+            if(errorSpan) { errorSpan.textContent=res; errorSpan.style.display='block'; }
             return false;
         } else {
             input.classList.remove('invalid');
@@ -535,7 +580,6 @@ const locationsMap = @json($locationsMap);
     });
 
     barangaySelect.addEventListener('change', ()=>{ updateDistrict(); validateAll(); });
-
     courseSelect.addEventListener('change', ()=>{
         const opt = courseSelect.options[courseSelect.selectedIndex];
         collegeInput.value = opt ? opt.dataset.college||'' : '';
@@ -544,27 +588,22 @@ const locationsMap = @json($locationsMap);
 
     window.openEditVolunteerModal = function(type, index){
         const volunteer = (window.volunteersData[type]||[])[index]||{};
-
         Object.keys(rules).forEach(key=>{
-            const input = document.getElementById(key);
+            const input=document.getElementById(key);
             if(!input) return;
-
-            if(key === 'barangay'){
+            if(key==='barangay'){
                 input.value = volunteer[key] && locationsMap[volunteer[key]] ? volunteer[key] : '';
-            } else {
-                input.value = volunteer[key] || '';
-            }
-
-            if(input.tagName === 'SELECT'){
-                const opt = Array.from(input.options).find(o => o.value === input.value);
+            } else input.value = volunteer[key] || '';
+            if(input.tagName==='SELECT'){
+                const opt = Array.from(input.options).find(o=>o.value===input.value);
                 if(opt) input.value = opt.value;
             }
         });
 
-        const selectedCourse = Array.from(courseSelect.options).find(o => o.value === volunteer.course);
-        if(selectedCourse){
-            courseSelect.value = selectedCourse.value;
-            collegeInput.value = selectedCourse.dataset.college || '';
+        const selectedCourse = Array.from(courseSelect.options).find(o=>o.value===volunteer.course);
+        if(selectedCourse){ 
+            courseSelect.value = selectedCourse.value; 
+            collegeInput.value = selectedCourse.dataset.college||''; 
         }
 
         updateDistrict();
@@ -574,27 +613,36 @@ const locationsMap = @json($locationsMap);
         form.action = routeTemplate.replace('__INDEX__', index).replace('__TYPE__', type);
 
         modal.classList.add('is-open');
-        document.documentElement.style.overflow = 'hidden';
-        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow='hidden';
+        document.body.style.overflow='hidden';
     };
 
     window.closeEditVolunteerModal = function(){
         modal.classList.remove('is-open');
-        document.documentElement.style.overflow = '';
-        document.body.style.overflow = '';
+        document.documentElement.style.overflow=''; 
+        document.body.style.overflow='';
     };
 
     modal.querySelector('.modal-overlay').addEventListener('click', e=>{
-        if(e.target === modal.querySelector('.modal-overlay')) closeEditVolunteerModal();
+        if(e.target===modal.querySelector('.modal-overlay')) closeEditVolunteerModal();
     });
 
     document.addEventListener('keydown', e=>{
-        if(modal.classList.contains('is-open') && e.key === 'Escape') closeEditVolunteerModal();
+        if(modal.classList.contains('is-open') && e.key==='Escape') closeEditVolunteerModal();
     });
 
+    /* ------------------------------------------------------------------
+       ⭐ INJECT NORMALIZATION BEFORE SUBMIT (NEW PATCH)
+       ------------------------------------------------------------------ */
     form.addEventListener('submit', e=>{
+        const sched = document.getElementById('class_schedule');
+        if (sched) {
+            sched.value = normalizeClassSchedule(sched.value);
+        }
+
         if(!validateAll()) e.preventDefault();
     });
+    /* ------------------------------------------------------------------ */
 
 })();
 </script>

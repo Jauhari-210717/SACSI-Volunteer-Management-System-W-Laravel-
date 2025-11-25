@@ -25,13 +25,43 @@ class VolunteerProfile extends Model
         'contact_number',
         'emergency_contact',
         'fb_messenger',
-        'barangay',     // Added
-        'district',     // Added
+        'barangay',
+        'district',
+
+        'profile_picture_url',
+        'profile_picture_path',
+
         'certificates',
         'class_schedule',
         'notes',
         'status',
     ];
+
+    /**
+     * Make avatar_url show in JSON responses automatically
+     */
+    protected $appends = ['avatar_url'];
+
+    /**
+     * Avatar Accessor
+     */
+    public function getAvatarUrlAttribute()
+    {
+        // 1. Prefer LOCAL PATH (if file exists)
+        if (!empty($this->profile_picture_path)) {
+            return asset('storage/' . ltrim($this->profile_picture_path, '/'));
+        }
+
+        // 2. Otherwise use STORED URL
+        if (!empty($this->profile_picture_url)) {
+            return $this->profile_picture_url;
+        }
+
+        // 3. Default
+        return asset('storage/defaults/default_user.png');
+    }
+
+
 
     public function importLog()
     {

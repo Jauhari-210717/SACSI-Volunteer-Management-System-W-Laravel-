@@ -1,5 +1,5 @@
 <style>
-/* Modal hidden by default */
+/* Reset Import Modal */
 .reset-import-modal {
     display: none;
     position: fixed;
@@ -7,8 +7,6 @@
     z-index: 9999;
     font-family: 'Segoe UI', Roboto, sans-serif;
 }
-
-/* Active modal shows */
 .reset-import-modal.active {
     display: flex;
     justify-content: center;
@@ -16,7 +14,7 @@
 }
 
 /* Overlay */
-.modal-overlay {
+.reset-modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.55);
@@ -25,118 +23,139 @@
     align-items: center;
 }
 
-/* Modal box */
-.modal-box {
+/* Modal Box */
+.reset-modal-box {
     background: #fff;
     border-radius: 16px;
     width: 90%;
     max-width: 500px;
     padding: 2rem;
-    text-align: center;
     animation: fadeInUp 0.3s ease forwards;
     box-shadow: 0 12px 40px rgba(0,0,0,0.35);
 }
 
 /* Header */
-.modal-header {
+.reset-modal-header {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
+    gap: .5rem;
+    text-align: center;
 }
-
-.modal-header h2 {
+.reset-modal-header h2 {
     font-size: 1.6rem;
     color: #B2000C;
     margin: 0;
 }
-
-.modal-icon {
+.reset-modal-icon {
     font-size: 2rem;
     color: #B2000C;
 }
 
-/* Modal Footer */
-.modal-buttons {
+/* Separator */
+.reset-modal-separator {
+    width: 85%;
+    height: 1px;
+    background: #ececec;
+    margin: 1rem auto;
+}
+
+/* LEFT-ALIGNED MESSAGE AREA */
+.reset-text-block {
+    text-align: left !important;
+    margin: 1rem auto 1.5rem;
+    padding: 0 0.75rem;
+    font-size: 1.07rem;
+    line-height: 1.6;
+    color: #333;
+    word-break: break-word;
+}
+
+/* Buttons */
+.reset-modal-buttons {
     display: flex;
     justify-content: center;
     gap: 16px;
-    align-items: center; /* Ensures buttons are aligned in the center */
-    width: 100%;
+    margin-top: 1.5rem;
 }
 
-/* Fix for form button */
-form button.modal-btn {
-    margin: 0; /* Remove any form-specific margin */
-}
-
-/* Confirm Button */
-.modal-btn.confirm {
-    background-color: #b2000c;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 10px 22px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.25s ease, transform 0.15s ease;
-}
-
-/* Cancel Button */
-.modal-btn.cancel {
+.reset-btn-cancel {
     background-color: #f1f1f1;
     color: #222;
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 10px 22px;
-    font-size: 0.95rem;
+    font-size: .95rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.25s ease, transform 0.15s ease;
 }
-
-.modal-btn.cancel:hover {
+.reset-btn-cancel:hover {
     background-color: #e2e2e2;
-    transform: translateY(-1px);
 }
 
-.modal-btn.confirm:hover {
+.reset-btn-confirm {
+    background-color: #b2000c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 22px;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.reset-btn-confirm:hover {
     background-color: #8e0009;
-    transform: translateY(-1px);
 }
 
-/* Animation */
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Success Styles */
+.reset-success-icon {
+    font-size: 2rem;
+    color: #28a745;
+}
+.reset-success-title {
+    color: #28a745 !important;
+}
+.reset-success-text {
+    text-align: left !important;
+}
+
+.reset-success-text {
+    font-size: 1.07rem;
+    line-height: 1.75;       /* better readability */
+    margin-top: 1.8rem;       /* proper spacing from header */
+    padding: 0 0.75rem;       /* clean left/right padding */
+    white-space: normal;      /* ensures proper wrapping */
+}
+
+.reset-success-text br {
+    margin-bottom: 0.6rem;
+    display: block;
+    content: "";
 }
 </style>
 
-{{-- Reset Import Modal --}}
-<div class="reset-import-modal" id="resetImportModal">
-    <div class="modal-overlay" id="resetModalOverlay">
-        <div class="modal-box">
+<!-- CONFIRM RESET MODAL -->
+<div id="resetImportModal" class="reset-import-modal">
+    <div id="resetModalOverlay" class="reset-modal-overlay">
+        <div class="reset-modal-box">
 
-            <!-- Modal Header -->
-            <div class="modal-header">
-                <i class="fa-solid fa-rotate-left modal-icon"></i>
+            <div class="reset-modal-header">
+                <i class="fa-solid fa-rotate-left reset-modal-icon"></i>
                 <h2>Clear Import Preview?</h2>
             </div>
 
-            <!-- Modal Body -->
-            <p id="resetModalMessage">Are you sure you want to clear all imported entries from the preview? This action cannot be undone.</p>
+            <hr class="reset-modal-separator">
 
-            <!-- Modal Footer -->
-            <div class="modal-buttons">
-                <button type="button" class="modal-btn cancel" id="cancelResetModal">
+            <div id="resetModalMessage" class="reset-text-block"></div>
+
+            <div class="reset-modal-buttons">
+                <button type="button" class="reset-btn-cancel" id="cancelResetModal">
                     <i class="fa-solid fa-xmark"></i> Cancel
                 </button>
 
                 <form action="{{ route('volunteer.import.reset') }}" method="POST">
                     @csrf
-                    <button type="submit" class="modal-btn confirm" id="confirmResetBtn">
+                    <button type="submit" class="reset-btn-confirm" id="confirmResetBtn">
                         <i class="fa-solid fa-check"></i> Confirm
                     </button>
                 </form>
@@ -145,45 +164,106 @@ form button.modal-btn {
         </div>
     </div>
 </div>
+
+
+<!-- SUCCESS MODAL -->
+<div id="resetSuccessModal" class="reset-import-modal">
+    <div id="resetSuccessOverlay" class="reset-modal-overlay">
+        <div class="reset-modal-box">
+
+            <div class="reset-modal-header">
+                <i class="fa-solid fa-circle-check reset-success-icon"></i>
+                <h2 class="reset-success-title">Success</h2>
+            </div>
+
+            <hr class="reset-modal-separator">
+
+            <div id="resetSuccessMessage" class="reset-text-block reset-success-text"></div>
+
+            <div class="reset-modal-buttons">
+                <button type="button" class="reset-btn-confirm" id="resetSuccessOkBtn">
+                    <i class="fa-solid fa-check"></i> OK
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const openBtn = document.getElementById('openResetModal');
-    const modal = document.getElementById('resetImportModal');
-    const overlay = document.getElementById('resetModalOverlay');
-    const cancelBtn = document.getElementById('cancelResetModal');
-    const modalBody = document.getElementById('resetModalMessage');
-    const confirmBtn = document.getElementById('confirmResetBtn');
+document.addEventListener('DOMContentLoaded', () => {
 
-    if (!openBtn || !modal || !overlay || !cancelBtn || !modalBody || !confirmBtn) return;
+    const resetModal = document.getElementById('resetImportModal');
+    const resetOverlay = document.getElementById('resetModalOverlay');
+    const openResetBtn = document.getElementById('openResetModal');
+    const cancelResetBtn = document.getElementById('cancelResetModal');
+    const confirmResetBtn = document.getElementById('confirmResetBtn');
+    const resetModalMessage = document.getElementById('resetModalMessage');
 
-    // Open modal
-    openBtn.addEventListener('click', () => {
-        const validCount = {{ session()->has('validEntries') ? count(session('validEntries')) : 0 }};
-        const invalidCount = {{ session()->has('invalidEntries') ? count(session('invalidEntries')) : 0 }};
-        const total = validCount + invalidCount;
+    function openResetModal() {
+        const validCount     = {{ session()->has('validEntries') ? count(session('validEntries')) : 0 }};
+        const invalidCount   = {{ session()->has('invalidEntries') ? count(session('invalidEntries')) : 0 }};
+        const duplicateCount = {{ session()->has('duplicateEntries') ? count(session('duplicateEntries')) : 0 }};
 
-        modalBody.textContent = `Are you sure you want to clear all imported entries from the preview? This action cannot be undone. Total rows to clear: ${total}`;
+        const total = validCount + invalidCount + duplicateCount;
 
-        confirmBtn.disabled = total === 0;
+        resetModalMessage.innerHTML = `
+            Are you sure you want to clear all imported entries?<br>
+            <strong>This action cannot be undone.</strong><br><br>
 
-        modal.classList.add('active');
+            <span style="color:#B2000C; font-weight:700; font-size:1.05rem;">
+                Rows to clear: ${total}
+            </span>
 
-        const invalidTable = document.getElementById('invalid-entries-table');
-        const firstRow = invalidTable?.querySelector('tbody tr');
-        window.lastUsedTable = { type: 'invalid', index: firstRow ? 0 : null };
-        sessionStorage.setItem('lastUsedTable', JSON.stringify(window.lastUsedTable));
+            <div style="font-size:0.95rem; margin-top:8px; line-height:1.4;">
+                <span style="color:#28a745;">Valid: ${validCount}</span><br>
+                <span style="color:#B2000C;">Invalid: ${invalidCount}</span><br>
+                <span style="color:#d38b00;">Duplicates: ${duplicateCount}</span>
+            </div>
+        `;
+
+        confirmResetBtn.disabled = false;
+        resetModal.classList.add('active');
+    }
+
+
+    function closeResetModal() { resetModal.classList.remove('active'); }
+
+    openResetBtn?.addEventListener('click', openResetModal);
+    cancelResetBtn?.addEventListener('click', closeResetModal);
+    resetOverlay?.addEventListener('click', e => { if (e.target === resetOverlay) closeResetModal(); });
+
+    document.addEventListener('keydown', e => {
+        if (resetModal.classList.contains('active') && e.key === 'Escape') closeResetModal();
+        if (resetModal.classList.contains('active') && e.key === 'Enter') confirmResetBtn.click();
     });
 
-    // Close modal
-    cancelBtn.addEventListener('click', () => modal.classList.remove('active'));
-    overlay.addEventListener('click', (e) => { if (e.target === overlay) modal.classList.remove('active'); });
-    document.addEventListener('keydown', (e) => { if (e.key === "Escape") modal.classList.remove('active'); });
 
-    // Show success info after reset
-    @if(session('resetInfo'))
-        const info = @json(session('resetInfo'));
-        alert(`Reset Complete!\nFile: ${info.file_name}\nRows Cleared: ${info.total_cleared}\nLog ID: ${info.log_id}`);
+    /* SUCCESS MODAL */
+    const successModal = document.getElementById('resetSuccessModal');
+    const successOverlay = document.getElementById('resetSuccessOverlay');
+    const successMessage = document.getElementById('resetSuccessMessage');
+    const successOkBtn = document.getElementById('resetSuccessOkBtn');
+
+    function showResetSuccess(msg) {
+        successMessage.innerHTML = msg;
+        successModal.classList.add('active');
+    }
+
+    function closeSuccess() { successModal.classList.remove('active'); }
+
+    successOkBtn?.addEventListener('click', closeSuccess);
+    successOverlay?.addEventListener('click', e => { if (e.target === successOverlay) closeSuccess(); });
+
+    document.addEventListener('keydown', e => {
+        if (successModal.classList.contains('active') && e.key === 'Escape') closeSuccess();
+        if (successModal.classList.contains('active') && e.key === 'Enter') closeSuccess();
+    });
+
+    /* TRIGGER SUCCESS AFTER REDIRECT */
+    @if(session('resetSuccess'))
+        showResetSuccess(`{!! session('resetSuccess') !!}`);
     @endif
+
 });
 </script>
-

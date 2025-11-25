@@ -34,6 +34,10 @@ return new class extends Migration
                 $table->string('barangay')->nullable();
                 $table->string('district')->nullable();
 
+                // Profile Picture
+                $table->string('profile_picture_url')->nullable();
+                $table->string('profile_picture_path')->nullable();
+
                 // These should have defaults → MUST be string instead of text
                 $table->string('certificates')->default('No certificates');
                 $table->string('class_schedule')->default('No class schedule');

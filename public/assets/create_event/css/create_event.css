@@ -20,7 +20,7 @@ body {
 
 /* ---------- Card / Section ---------- */
 .edit-section {
-  width: clamp(360px, 95%, 1100px);
+  width: clamp(360px, 95%, 1300px);
   background: #fff;
   border-radius: 14px;
   padding: 2rem;
@@ -95,6 +95,49 @@ body {
   flex: 1 1 48%;
   min-width: 160px;
   cursor: pointer;
+}
+
+/* Search box container */
+.custom-select .search-box {
+    position: relative;
+    padding: 8px 10px;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+/* Search input */
+.custom-select .search-box input {
+    width: 100%;
+    padding: 8px 36px 8px 12px; /* space for icon */
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+    transition: all 0.25s ease;
+}
+
+/* Search icon */
+.custom-select .search-box .search-icon {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #BC3000;
+    font-size: 1rem;
+    pointer-events: none;
+    transition: transform 0.25s ease;
+}
+
+/* Active search input styling */
+.custom-select .search-box input.search-active {
+    border-color: #BC3000 !important;
+    background: #ffefef !important;
+    box-shadow: 0 0 0 3px rgba(188, 48, 0, 0.15);
+}
+
+/* Tilt animation when typing */
+.custom-select .search-box .search-icon.tilt {
+    transform: translateY(-50%) rotate(-10deg);
 }
 
 /* Trigger button */
@@ -453,7 +496,7 @@ body {
 }
 
 .organizer-input:focus {
-  border-color: #702626;
+  border-color: #c73a3a;
   background: #f3f4f6;
   font-weight: 600;
 }
@@ -474,6 +517,7 @@ body {
 
 .add-organizer-btn:hover {
   background: #8f000a;
+  color: #fff;
   transform: scale(1.05);
 }
 

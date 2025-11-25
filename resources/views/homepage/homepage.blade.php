@@ -41,21 +41,17 @@
 
         {{-- Left Panel --}}
         <div class="left-panel">
-<a href="{{ route('volunteer.import.index') }}" 
-   class="card volunteer-import" 
-   data-tooltip="Upload volunteer lists from external files.">
-   <i class="fa-solid fa-upload fa-3x"></i>
-   <span>Volunteer Import</span>
-</a>
+            <a href="{{ route('volunteer.import.index') }}" class="card volunteer-import" data-tooltip="Upload volunteer lists from external files.">
+                <i class="fa-solid fa-upload fa-3x"></i>
+                <span>Volunteer Import</span>
+            </a>
 
-
-
-            <a href="{{ url('Volunteer_List/Volunteer_List') }}" class="card volunteers" data-tooltip="View and manage all registered volunteers.">
+            <a href="{{ route('volunteers.list') }}" class="card volunteers" data-tooltip="View and manage all registered volunteers.">
                 <i class="fa-solid fa-user-graduate fa-3x"></i>
                 <span>Volunteers</span>
             </a>
 
-            <a href="{{ url('CreateEvent_Balbin/create_Event') }}" class="card new-event" data-tooltip="Create and post a new volunteer event.">
+            <a href="{{ route('events.create') }}" class="card new-event" data-tooltip="Create and post a new volunteer event.">
                 <i class="fas fa-calendar-plus"></i>
                 <span>New Event</span>
             </a>

@@ -25,9 +25,8 @@
     animation: slideIn 0.3s ease forwards;
   }
 
-  /* Header styles forced red */
   .custom-modal.confirm-modal h3 {
-    color: #dc3545 !important; /* Red */
+    color: #dc3545 !important;
     font-size: 1.4rem;
     margin-bottom: 1rem;
     display: flex;
@@ -37,7 +36,22 @@
   }
 
   .custom-modal.confirm-modal h3 i {
-    color: #dc3545 !important; /* Red icon */
+    color: #dc3545 !important;
+  }
+
+  .custom-modal.success-modal h3 {
+      color: #28a745 !important;
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+  }
+
+  .custom-modal.success-modal h3 i {
+      color: #28a745 !important;
+      font-size: 2rem;
   }
 
   .custom-modal p {
@@ -64,9 +78,8 @@
     gap: 0.5rem;
   }
 
-  /* Primary button forced red */
   .modal-actions .btn.btn-primary {
-    background-color: #dc3545 !important;
+    background-color: #b2000c  !important;
     color: #fff !important;
   }
 
@@ -85,7 +98,17 @@
     transform: translateY(-2px);
   }
 
-  /* Animations */
+  #successOkBtn {
+      background-color: #b2000c !important;
+      color: #fff !important;
+      border: none !important;
+  }
+
+  #successOkBtn:hover {
+      background-color: #8a0009 !important;
+      transform: translateY(-2px);
+  }
+
   @keyframes slideIn {
     from { opacity: 0; transform: translateY(-20px) scale(0.96); }
     to { opacity: 1; transform: translateY(0) scale(1); }
@@ -97,17 +120,19 @@
   }
 </style>
 
-{{-- Move to Verified Modal --}}
+<!-- Confirm Move Modal -->
 <div id="modal2" class="custom-modal-overlay">
   <div class="custom-modal confirm-modal">
     <h3>
-      <i class="fa-solid fa-triangle-exclamation"></i> Move to Verified
+      <i class="fa-solid fa-exclamation-triangle"></i> Confirm Move
     </h3>
     <p id="modalRowCount">Do you want to move selected entries to the Verified list?</p>
+
     <div class="modal-actions">
       <button class="btn btn-primary" id="confirmMoveBtn">
         <i class="fa-solid fa-check"></i> Yes, Move
       </button>
+
       <button class="btn btn-secondary" id="cancelMoveBtn">
         <i class="fa-solid fa-xmark"></i> Cancel
       </button>
@@ -115,57 +140,177 @@
   </div>
 </div>
 
+<!-- Success Modal -->
+<div id="successModal" class="custom-modal-overlay">
+  <div class="custom-modal success-modal">
+    <h3>
+      <i class="fa-solid fa-circle-check"></i> Success!
+    </h3>
+    <p id="successModalMessage">{{ session('success') }}</p>
+
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="successOkBtn">
+          OK
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- No Entries Modal -->
+<div id="noEntryModal" class="custom-modal-overlay">
+  <div class="custom-modal confirm-modal">
+    <h3>
+      <i class="fa-solid fa-circle-xmark"></i> Nothing to Move
+    </h3>
+    <p>No invalid entries are available to move.</p>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="noEntryOkBtn">
+        <i class="fa-solid fa-check"></i> OK
+      </button>
+    </div>
+  </div>
+</div>
+
+@if(session('show_success_modal') && session('success'))
+<script>
+    window.serverSuccessMessage = `{!! session('success') !!}`;
+</script>
+@endif
 
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('modal2');
-    const openModalBtn = document.getElementById('openMoveModalBtn');
-    const confirmBtn = document.getElementById('confirmMoveBtn');
-    const cancelBtn = document.getElementById('cancelMoveBtn');
-    const hiddenForm = document.getElementById('moveToVerifiedForm');
-    const modalRowCount = document.getElementById('modalRowCount');
+document.addEventListener("DOMContentLoaded", () => {
 
-    // Open modal and check all rows
-    openModalBtn.addEventListener('click', () => {
-        const allCheckboxes = document.querySelectorAll('#invalid-entries-table tbody input[type="checkbox"]');
+    const moveModal      = document.getElementById("modal2");
+    const successModal   = document.getElementById("successModal");
+    const noEntryModal   = document.getElementById("noEntryModal");
 
-        if (allCheckboxes.length === 0) {
-            alert('No invalid entries to move.');
-            return;
-        }
+    const openMoveBtn    = document.getElementById("openMoveModalBtn");
+    const confirmMoveBtn = document.getElementById("confirmMoveBtn");
+    const cancelMoveBtn  = document.getElementById("cancelMoveBtn");
 
-        // Check all checkboxes
-        allCheckboxes.forEach(cb => cb.checked = true);
+    const successOkBtn   = document.getElementById("successOkBtn");
+    const noEntryOkBtn   = document.getElementById("noEntryOkBtn");
 
-        // Update modal text with row count
-        modalRowCount.textContent = `You are about to move ${allCheckboxes.length} ${allCheckboxes.length > 1 ? 'entries' : 'entry'} to the Verified list.`;
+    const modalRowCount  = document.getElementById("modalRowCount");
+    const successMessage = document.getElementById("successModalMessage");
 
-        modal.classList.add('active');
-    });
+    const hiddenForm     = document.getElementById("moveToVerifiedForm");
 
-    // Close modal
-    const closeModal = () => {
-        modal.classList.remove('active');
+    if (!hiddenForm) return;
+
+    /* Helpers */
+    const getInvalidCheckboxes = () =>
+        document.querySelectorAll('#invalid-entries-table tbody input[name="selected_invalid[]"]');
+
+    const resetHiddenForm = () => {
+        const token = hiddenForm.querySelector('input[name="_token"]');
+        hiddenForm.innerHTML = "";
+        if (token) hiddenForm.appendChild(token);
     };
-    cancelBtn.addEventListener('click', closeModal);
 
-    // Confirm action
-    confirmBtn.addEventListener('click', () => {
-        // Clear previous hidden inputs
-        hiddenForm.innerHTML = '@csrf';
 
-        // Copy checked checkboxes into hidden form
-        const selectedCheckboxes = document.querySelectorAll('#invalid-entries-table tbody input[type="checkbox"]:checked');
-        selectedCheckboxes.forEach(cb => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'selected_invalid[]';
-            input.value = cb.value;
-            hiddenForm.appendChild(input);
+    /* 1. Move ALL invalid → open modal */
+    if (openMoveBtn) {
+        openMoveBtn.addEventListener("click", () => {
+            const boxes = getInvalidCheckboxes();
+
+            if (boxes.length === 0) {
+                noEntryModal.classList.add("active");
+                return;
+            }
+
+            boxes.forEach(cb => cb.checked = true);
+
+            modalRowCount.innerHTML = 
+                `Move <strong style="color:#bc3000">${boxes.length} entr${boxes.length>1?"ies":"y"}</strong> to the Verified list?`;
+
+            moveModal.classList.add("active");
+        });
+    }
+
+
+    /* 2. Confirm move */
+    confirmMoveBtn?.addEventListener("click", () => {
+
+        const boxes = getInvalidCheckboxes();
+        resetHiddenForm();
+
+        boxes.forEach(cb => {
+            if (cb.checked) {
+                const i = document.createElement("input");
+                i.type = "hidden";
+                i.name = "selected_invalid[]";
+                i.value = cb.value;
+                hiddenForm.appendChild(i);
+            }
         });
 
         hiddenForm.submit();
-        closeModal();
     });
-  });
+
+
+    /* 3. Cancel modal */
+    cancelMoveBtn?.addEventListener("click", () => moveModal.classList.remove("active"));
+
+    /* 4. Close empty modal */
+    noEntryOkBtn?.addEventListener("click", () => noEntryModal.classList.remove("active"));
+
+
+    /* 5. SUCCESS MODAL — highlight only important parts */
+    if (window.serverSuccessMessage && successMessage) {
+
+        let msg = window.serverSuccessMessage;
+
+        // CONDITION: If message contains comma-separated entries → treat as "Move ALL"
+        if (msg.includes("Moved Volunteer Entry") && msg.includes(",")) {
+            const count = msg.split("Moved Volunteer Entry").length - 1;
+            msg = `${count} entries successfully moved to Verified.`;
+        }
+
+        // highlight names & entry numbers like "#3 John"
+        msg = msg.replace(/(Entry\s?#?\d+[^,]*)/gi,
+            `<span style="color:#b2000c; font-weight:600;">$1</span>`
+        );
+
+        // Set formatted HTML
+        successMessage.innerHTML = msg;
+
+        successModal.classList.add("active");
+    }
+
+    successOkBtn?.addEventListener("click", () => successModal.classList.remove("active"));
+});
+
+
+/* 6. Instant move single row */
+function submitMoveToValid(button) {
+    const row = button.closest("tr");
+    if (!row) return;
+
+    const checkbox = row.querySelector('input[name="selected_invalid[]"]');
+    if (!checkbox) return;
+
+    const form = document.getElementById("moveToVerifiedForm");
+    if (!form) return;
+
+    const token = form.querySelector('input[name="_token"]');
+    form.innerHTML = "";
+    if (token) form.appendChild(token);
+
+    const hidden = document.createElement("input");
+    hidden.type = "hidden";
+    hidden.name = "selected_invalid[]";
+    hidden.value = checkbox.value;
+
+    form.appendChild(hidden);
+    form.submit();
+}
+
+
+/* 7. Move VALID → INVALID */
+function moveToInvalid(index) {
+    window.location.href =
+        `/volunteer-import/move-valid-to-invalid/${index}#invalid-entries-table`;
+}
 </script>

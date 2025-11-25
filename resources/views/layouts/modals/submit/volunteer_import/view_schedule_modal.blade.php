@@ -52,20 +52,7 @@
     </div>
   </div>
 </div>
-<!-- Class Schedule Message Modal -->
-<div id="scheduleMessageModal" class="schedule-modal-overlay" style="display:none;">
-  <div class="schedule-modal">
-    <h3 class="modal-title">
-      <i class="fa-solid fa-circle-exclamation" style="color:#d9534f;"></i> Notice
-    </h3>
-    <div class="modal-content-wrapper">
-      <p id="scheduleMessageText">This is a message</p>
-    </div>
-    <div class="modal-buttons">
-      <button type="button" class="btn btn-secondary" onclick="closeScheduleMessageModal()">OK</button>
-    </div>
-  </div>
-</div>
+
 
 <style>
 /* Overlay */
@@ -139,14 +126,36 @@
     @method('PUT')
     <input type="hidden" name="schedule" id="scheduleInput">
 </form>
-
 <script>
 const MAX_ROWS = 6;
-const timeOptions = [
-  "7:30-8:00","8:00-10:50","8:00-11:00","8:30-9:30","9:30-10:50",
-  "11:00-12:20","12:30-1:50","2:00-3:20","2:00-3:30","2:00-4:50",
-  "3:00-4:50","3:30-5:00","5:00-6:20","5:00-6:30","6:30-7:20","6:30-7:30"
-];
+
+/**
+ * Official time slots with AM/PM semantics & 24h start/end
+ * Keys are the REAL stored values ("7:30-8:20", etc.)
+ */
+const timeMeta = {
+  // Morning (AM)
+  "7:30-8:20":  { label: "7:30-8:20 AM", group: "AM", start: 7*60+30,  end: 8*60+20  },
+  "8:00-9:20":  { label: "8:00-9:20 AM", group: "AM", start: 8*60,     end: 9*60+20  },
+  "8:00-10:50": { label: "8:00-10:50 AM",group: "AM", start: 8*60,     end:10*60+50  },
+  "8:30-9:50":  { label: "8:30-9:50 AM", group: "AM", start: 8*60+30,  end: 9*60+50  },
+  "8:30-11:30": { label: "8:30-11:30 AM",group: "AM", start: 8*60+30,  end:11*60+30  },
+  "9:30-10:50": { label: "9:30-10:50 AM",group: "AM", start: 9*60+30,  end:10*60+50  },
+  "11:00-12:20":{ label: "11:00-12:20 AM",group:"AM", start:11*60,     end:12*60+20  },
+
+  // Afternoon / Evening (PM)
+  "12:30-1:50": { label: "12:30-1:50 PM", group: "PM", start:12*60+30, end:13*60+50  },
+  "12:30-2:50": { label: "12:30-2:50 PM", group: "PM", start:12*60+30, end:14*60+50  },
+  "2:00-3:20":  { label: "2:00-3:20 PM",  group: "PM", start:14*60,    end:15*60+20  },
+  "2:00-4:50":  { label: "2:00-4:50 PM",  group: "PM", start:14*60,    end:16*60+50  },
+  "3:30-4:50":  { label: "3:30-4:50 PM",  group: "PM", start:15*60+30, end:16*60+50  },
+  "5:00-6:20":  { label: "5:00-6:20 PM",  group: "PM", start:17*60,    end:18*60+20  },
+  "6:30-7:20":  { label: "6:30-7:20 PM",  group: "PM", start:18*60+30, end:19*60+20  },
+  "6:30-8:50":  { label: "6:30-8:50 PM",  group: "PM", start:18*60+30, end:20*60+50  },
+  "7:30-8:50":  { label: "7:30-8:50 PM",  group: "PM", start:19*60+30, end:20*60+50  },
+};
+
+const timeOptions = Object.keys(timeMeta);
 
 let currentType = null;
 let currentIndex = null;
@@ -159,89 +168,180 @@ const style = document.createElement('style');
 style.innerHTML = `select option:disabled { color: #aaa; font-style: italic; }`;
 document.head.appendChild(style);
 
-// Normalize HH:MM-HH:MM and return closest match in timeOptions if exists
+/* ============================================================
+   TIME HELPERS
+   ============================================================ */
+
 function normalizeTimeRange(timeStr) {
     if (!timeStr) return "";
+
+    timeStr = timeStr.replace(/[,;]+/g, ' ').trim();
     const parts = timeStr.split('-').map(p => p.trim());
+
     if (parts.length !== 2) return timeStr;
-    const normalized = parts.map(p => /^\d{1,2}$/.test(p) ? p + ":00" : p).join('-');
-    // Try to match closest from timeOptions
-    const match = timeOptions.find(opt => opt === normalized);
-    return match || normalized;
+
+    const fix = p => /^\d{1,2}$/.test(p) ? p + ":00" : p;
+    const normalized = `${fix(parts[0])}-${fix(parts[1])}`;
+
+    if (timeMeta[normalized]) return normalized;
+
+    return normalized;
 }
 
-// Convert HH:MM -> minutes
-function timeToMinutes(t) {
-    const [h,m] = t.split(':').map(Number);
-    return h*60 + m;
+function parseRange(rangeStr) {
+    const key = normalizeTimeRange(rangeStr);
+    if (!key || !key.includes('-')) return null;
+
+    if (timeMeta[key]) {
+        return { start: timeMeta[key].start, end: timeMeta[key].end };
+    }
+
+    const [start, end] = key.split('-').map(s => s.trim());
+    if (!start.includes(':') || !end.includes(':')) return null;
+
+    const [sh, sm] = start.split(':').map(Number);
+    const [eh, em] = end.split(':').map(Number);
+    if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
+
+    return { start: sh*60 + sm, end: eh*60 + em };
 }
 
-// Compare by start time
-function compareTimeRanges(a,b){
-    return timeToMinutes(a.split('-')[0]) - timeToMinutes(b.split('-')[0]);
+function rangesOverlap(aStr, bStr) {
+    const a = parseRange(aStr);
+    const b = parseRange(bStr);
+    if (!a || !b) return false;
+    return a.start < b.end && b.start < a.end;
 }
 
-// ----- HELPER: create select inside a cell -----
+/* ============================================================
+   👉 LIVE SORTING (FULL FIX APPLIED HERE)
+   ============================================================ */
+
+function sortRowsByEarliest() {
+    const container = document.getElementById('scheduleContent');
+    if (!container) return;
+
+    const rows = Array.from(container.querySelectorAll('tr'));
+
+    function getEarliestMinutes(row) {
+        const tds = row.querySelectorAll("td.schedule-entry");
+
+        for (let i = 0; i < days.length; i++) {
+            const td = tds[i];
+            if (!td) continue;
+
+            const sel = td.querySelector("select");
+            const val = sel ? sel.value.trim() : td.textContent.trim();
+
+            const r = parseRange(val);
+            if (r && !isNaN(r.start)) {
+
+                // ⭐⭐⭐ FIX: sort by day first, then by start time
+                return i * 2400 + r.start;
+            }
+        }
+
+        return Infinity;
+    }
+
+    rows.sort((a, b) => getEarliestMinutes(a) - getEarliestMinutes(b));
+
+    rows.forEach(r => container.appendChild(r));
+    updateRowNumbers();
+}
+
+/* ============================================================
+   createSelectInCell()
+   ============================================================ */
+
 function createSelectInCell(td, colIdx, selectedPerDay) {
   const day = days[colIdx];
   let currentValue = td.textContent.trim();
-  currentValue = normalizeTimeRange(currentValue); // ✅ normalize
+  currentValue = normalizeTimeRange(currentValue);
   td.textContent = '';
 
   const select = document.createElement("select");
   select.classList.add("form-select","form-select-sm");
-  select.setAttribute('data-prev',currentValue);
+  select.setAttribute('data-prev', currentValue);
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
   placeholder.text = "No Class";
   select.appendChild(placeholder);
 
+  const groups = {
+      AM: document.createElement("optgroup"),
+      PM: document.createElement("optgroup")
+  };
+  groups.AM.label = "⏰ Morning (AM)";
+  groups.PM.label = "🌆 Afternoon / Evening (PM)";
+
   timeOptions.forEach(opt => {
+    const meta = timeMeta[opt];
+    const groupKey = meta?.group || "AM";
     const option = document.createElement("option");
-    option.value = opt; 
-    option.text = opt;
-    if(selectedPerDay[day].includes(opt) && opt!==currentValue) option.disabled=true;
-    select.appendChild(option);
+    option.value = opt;
+    option.text  = meta?.label || opt;
+
+    const conflict = selectedPerDay[day].some(v => {
+        if (!v) return false;
+        if (v === currentValue) return false;
+        return rangesOverlap(opt, v);
+    });
+    if (conflict) option.disabled = true;
+
+    groups[groupKey].appendChild(option);
   });
 
-  // Set select to closest option or current value if not in options
-  select.value = timeOptions.includes(currentValue) ? currentValue : "";
-  if(!select.value && currentValue) {
-      const customOption = document.createElement("option");
-      customOption.value = currentValue;
-      customOption.text = currentValue + " (Custom)";
-      select.appendChild(customOption);
-      select.value = currentValue;
+  select.appendChild(groups.AM);
+  select.appendChild(groups.PM);
+
+  if (!timeMeta[currentValue] && currentValue) {
+      const customOpt = document.createElement("option");
+      customOpt.value = currentValue;
+      customOpt.text  = currentValue + " (Custom)";
+      select.appendChild(customOpt);
   }
 
-  select.addEventListener('change', e=>{
-    const sel=e.target;
-    const oldVal=sel.getAttribute('data-prev')||'';
-    const newVal=sel.value;
+  select.value = currentValue || "";
 
-    const idx=selectedPerDay[day].indexOf(oldVal);
-    if(idx>-1) selectedPerDay[day].splice(idx,1);
-    if(newVal) selectedPerDay[day].push(newVal);
+  select.addEventListener('change', e => {
+    const sel = e.target;
+    const oldVal = sel.getAttribute('data-prev') || '';
+    const newVal = sel.value;
 
-    sel.setAttribute('data-prev',newVal);
+    const idx = selectedPerDay[day].indexOf(oldVal);
+    if (idx > -1) selectedPerDay[day].splice(idx, 1);
+    if (newVal) selectedPerDay[day].push(newVal);
 
-    // update other selects in same column
-    document.querySelectorAll("#scheduleContent tr").forEach(r=>{
-      const cell=r.querySelectorAll("td.schedule-entry")[colIdx];
-      const otherSel=cell.querySelector("select");
-      if(otherSel && otherSel!==sel){
-        otherSel.querySelectorAll("option").forEach(opt=>{
-          if(opt.value && opt.value!==otherSel.value) opt.disabled=selectedPerDay[day].includes(opt.value);
+    sel.setAttribute('data-prev', newVal);
+
+    document.querySelectorAll("#scheduleContent tr").forEach(r => {
+      const cell = r.querySelectorAll("td.schedule-entry")[colIdx];
+      const otherSel = cell.querySelector("select");
+      if (otherSel && otherSel !== sel) {
+        otherSel.querySelectorAll("option").forEach(opt => {
+          if (!opt.value) return;
+          if (opt.value === otherSel.value) {
+            opt.disabled = false;
+            return;
+          }
+          const shouldDisable = selectedPerDay[day].some(v => v && rangesOverlap(opt.value, v));
+          opt.disabled = shouldDisable;
         });
       }
     });
+
+    sortRowsByEarliest();
   });
 
   td.appendChild(select);
 }
 
-// ----- OPEN MODAL -----
+/* ============================================================
+   OPEN MODAL
+   ============================================================ */
+
 function openScheduleModal(scheduleString, type, index, volunteerId) {
   currentType = type;
   currentIndex = index;
@@ -260,29 +360,47 @@ function openScheduleModal(scheduleString, type, index, volunteerId) {
     const match = scheduleString.match(regex);
     let raw = (match && match[1]) ? match[1].trim() : "";
     raw = raw.replace(/No Class/gi,'').trim();
-    scheduleData[day] = raw ? raw.split(/\s+/).filter(Boolean).map(normalizeTimeRange) : [];
-    scheduleData[day].sort(compareTimeRanges);
+    raw = raw.replace(/[,;]+/g, ' ');
+
+    scheduleData[day] = raw
+        ? raw.split(/\s+/)
+             .filter(Boolean)
+             .map(normalizeTimeRange)
+        : [];
+
+    scheduleData[day].sort((a,b) => {
+        const ra = parseRange(a);
+        const rb = parseRange(b);
+        if (!ra || !rb) return 0;
+        return ra.start - rb.start;
+    });
   });
 
-  let numRows = Math.max(...days.map(day=>scheduleData[day].length));
-  if(!Number.isFinite(numRows)||numRows<=0) numRows=1;
-  numRows = Math.min(MAX_ROWS,numRows);
+  let numRows = Math.max(...days.map(day => scheduleData[day].length));
+  if (!Number.isFinite(numRows) || numRows <= 0) numRows = 1;
+  numRows = Math.min(MAX_ROWS, numRows);
 
-  for(let r=0;r<numRows;r++){
+  for (let r = 0; r < numRows; r++) {
     const rowData = {};
     days.forEach(day => rowData[day] = scheduleData[day][r] || "");
     addScheduleRow(rowData);
   }
 
+  sortRowsByEarliest();
+
   document.getElementById('addRowBtnFooter').onclick = ()=>addScheduleRow();
   new bootstrap.Modal(document.getElementById('classScheduleModal')).show();
 }
 
-// ----- ADD ROW -----
+/* ============================================================
+   ADD ROW
+   ============================================================ */
+
 function addScheduleRow(rowData=null){
   const container=document.getElementById('scheduleContent');
   if(container.children.length>=MAX_ROWS){
-    showMessageModal("You can only add up to "+MAX_ROWS+" rows."); return;
+    showMessageModal("You can only add up to "+MAX_ROWS+" rows."); 
+    return;
   }
 
   const tr=document.createElement('tr');
@@ -302,13 +420,16 @@ function addScheduleRow(rowData=null){
   delBtn.type='button';
   delBtn.className='btn btn-sm btn-danger delete-row-btn';
   delBtn.innerHTML='<i class="fa-solid fa-trash"></i>';
-  delBtn.addEventListener("click",()=>{ tr.remove(); updateRowNumbers(); });
+  delBtn.addEventListener("click",()=>{
+    tr.remove(); 
+    updateRowNumbers();
+    sortRowsByEarliest();
+  });
   delTd.appendChild(delBtn);
   tr.appendChild(delTd);
 
   container.appendChild(tr);
 
-  // Convert new row to select if editing
   if(isEditing){
     const selectedPerDay={};
     days.forEach((day,idx)=>{
@@ -322,16 +443,24 @@ function addScheduleRow(rowData=null){
       createSelectInCell(td,colIdx,selectedPerDay);
     });
   }
+
+  sortRowsByEarliest();
 }
 
-// ----- UPDATE ROW NUMBERS -----
+/* ============================================================
+   UPDATE ROW NUMBERS
+   ============================================================ */
+
 function updateRowNumbers(){
   document.querySelectorAll("#scheduleContent tr").forEach((row,idx)=>{
     row.querySelector(".schedule-time").textContent = idx+1;
   });
 }
 
-// ----- EDIT SCHEDULE -----
+/* ============================================================
+   EDIT SCHEDULE
+   ============================================================ */
+
 document.getElementById('editScheduleBtn').addEventListener('click',()=>{
   isEditing = true;
   const container=document.querySelector("#scheduleContent");
@@ -351,12 +480,19 @@ document.getElementById('editScheduleBtn').addEventListener('click',()=>{
     });
   });
 
+  sortRowsByEarliest();
+
   document.getElementById('editScheduleBtn').classList.add('d-none');
   document.getElementById('saveScheduleBtn').classList.remove('d-none');
 });
 
-// ----- SAVE SCHEDULE -----
+/* ============================================================
+   SAVE SCHEDULE
+   ============================================================ */
+
 document.getElementById('saveScheduleBtn').addEventListener('click',()=>{
+  sortRowsByEarliest();
+
   const updatedSchedule={};
   days.forEach(day=>updatedSchedule[day]=[]);
 
@@ -364,6 +500,7 @@ document.getElementById('saveScheduleBtn').addEventListener('click',()=>{
     row.querySelectorAll("td.schedule-entry").forEach((td,cIdx)=>{
       const sel=td.querySelector("select");
       let val=sel?sel.value.trim():td.textContent.trim();
+      val = val.replace("(Custom)","").trim();
       val = normalizeTimeRange(val);
       updatedSchedule[days[cIdx]][rIdx]=val;
       td.textContent=val;
@@ -371,7 +508,17 @@ document.getElementById('saveScheduleBtn').addEventListener('click',()=>{
     });
   });
 
-  days.forEach(day=>updatedSchedule[day].sort(compareTimeRanges));
+  days.forEach(day=>{
+    updatedSchedule[day] = updatedSchedule[day]
+      .filter(v => v)
+      .sort((a,b)=>{
+        const ra = parseRange(a);
+        const rb = parseRange(b);
+        if (!ra || !rb) return 0;
+        return ra.start - rb.start;
+      });
+  });
+
   const displaySchedule={};
   days.forEach(day=>displaySchedule[day]=updatedSchedule[day].map(t=>t||"No Class"));
   const scheduleStr=formatScheduleString(displaySchedule);
@@ -396,14 +543,20 @@ document.getElementById('saveScheduleBtn').addEventListener('click',()=>{
   isEditing = false;
 });
 
-// ----- FORMAT SCHEDULE STRING -----
+/* ============================================================
+   FORMAT SCHEDULE STRING
+   ============================================================ */
+
 function formatScheduleString(scheduleObj){
   return Object.entries(scheduleObj).map(([day,times])=>{
     return day+": "+(times.length?times.join(" "):"No Class");
   }).join(' ');
 }
 
-// ----- MODALS -----
+/* ============================================================
+   MODALS
+   ============================================================ */
+
 function showMessageModal(msg){
   const el=document.getElementById('messageModalText');
   if(el) el.textContent=msg;
@@ -426,14 +579,12 @@ function closeScheduleMessageModal(){
   overlay.style.display='none';
 }
 
-// RESET BUTTONS IF MODAL CLOSES
 document.getElementById('classScheduleModal').addEventListener('hidden.bs.modal',()=>{
   document.getElementById('saveScheduleBtn').classList.add('d-none');
   document.getElementById('editScheduleBtn').classList.remove('d-none');
   isEditing = false;
 });
 
-// Auto-show Laravel flash messages
 document.addEventListener("DOMContentLoaded", function() {
     @if(session('success') || session('info'))
         const msg = {!! json_encode(session('success') ?? session('info')) !!};
@@ -441,6 +592,8 @@ document.addEventListener("DOMContentLoaded", function() {
     @endif
 });
 </script>
+
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

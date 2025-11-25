@@ -3,48 +3,55 @@
 namespace App\Http\Controllers;
 
 use App\Models\VolunteerProfile;
+use App\Models\Course;
+use App\Models\Location;
 use Illuminate\Http\Request;
 
 class VolunteerProfileController extends Controller
 {
     /**
-     * Display a listing of all volunteer profiles
-     */
-    public function index()
-    {
-        $volunteers = VolunteerProfile::all();
-        return view('volunteers.index', compact('volunteers'));
-    }
-
-    /**
-     * Show details of a single volunteer profile
+     * Show a specific volunteer profile
      */
     public function show($id)
     {
-        $volunteer = VolunteerProfile::findOrFail($id);
-        return view('volunteers.show', compact('volunteer'));
+        $volunteer = VolunteerProfile::with(['course', 'location'])->findOrFail($id);
+
+        // Load dropdown helper data
+        $courses = Course::orderBy('course_name')->get();
+        $barangays = Location::distinct()->pluck('barangay')->filter()->sort()->values();
+        $districts = Location::distinct()->pluck('district_id')->filter()->unique()->sort()->values();
+
+        return view('volunteer_profile.volunteer_profile', compact(
+            'volunteer',
+            'courses',
+            'barangays',
+            'districts'
+        ));
     }
 
     /**
-     * Update a volunteer profile
+     * Update profile
      */
     public function update(Request $request, $id)
     {
         $request->validate([
-            'full_name' => 'required|string|max:255',
-            'id_number' => 'nullable|string|max:50', // New field
-            'email' => 'nullable|email|max:255',
-            'contact_number' => 'nullable|string|max:20',
-            'emergency_contact' => 'nullable|string|max:20',
-            'fb_messenger' => 'nullable|string|max:255',
-            'course' => 'nullable|string|max:100',
-            'year_level' => 'nullable|integer|min:1|max:10',
-            'barangay' => 'nullable|string|max:255',
-            'district' => 'nullable|string|max:255',
-            'status' => 'nullable|in:Active,Inactive,Archived',
+            'full_name'         => 'required|string|max:255',
+            'id_number'         => 'nullable|string|max:50',
+            'email'             => 'nullable|email|max:255',
+            'contact_number'    => 'nullable|string|max:50',
+            'emergency_contact' => 'nullable|string|max:50',
+            'fb_messenger'      => 'nullable|string|max:255',
+            'course_id'         => 'nullable|integer|exists:courses,course_id',
+            'year_level'        => 'nullable|integer|min:1|max:10',
+            'barangay'          => 'nullable|string|max:255',
+            'district'          => 'nullable|string|max:255',
+
+            // Match DB enum: active / inactive
+            'status'            => 'nullable|in:active,inactive',
         ]);
 
         $volunteer = VolunteerProfile::findOrFail($id);
+
         $volunteer->update($request->only([
             'full_name',
             'id_number',
@@ -52,24 +59,24 @@ class VolunteerProfileController extends Controller
             'contact_number',
             'emergency_contact',
             'fb_messenger',
-            'course',
+            'course_id',
             'year_level',
             'barangay',
             'district',
             'status',
         ]));
 
-        return redirect()->back()->with('success', 'Volunteer profile updated successfully!');
+        return redirect()->back()->with('success', 'Profile updated successfully.');
     }
 
     /**
-     * Delete a volunteer profile
+     * Delete profile
      */
     public function destroy($id)
     {
-        $volunteer = VolunteerProfile::findOrFail($id);
-        $volunteer->delete();
+        VolunteerProfile::findOrFail($id)->delete();
 
-        return redirect()->back()->with('success', 'Volunteer profile deleted successfully!');
+        return redirect()->route('volunteers.list')
+            ->with('success', 'Volunteer profile deleted.');
     }
 }

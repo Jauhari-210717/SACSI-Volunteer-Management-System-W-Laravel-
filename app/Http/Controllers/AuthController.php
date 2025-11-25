@@ -141,7 +141,7 @@ public function login(Request $request)
             'role.in' => 'Selected role is invalid.',
         ]);
 
-        $profilePath = $request->file('profile_picture')->store('profile_pictures', 'public');
+        $profilePath = $request->file('profile_picture')->store('profile_pictures/admin', 'public');
 
         $admin = null;
         DB::transaction(function () use ($request, $profilePath, &$admin) {

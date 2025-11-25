@@ -14,16 +14,45 @@ return new class extends Migration
                 $table->string('title');
                 $table->text('description')->nullable();
                 $table->string('venue')->nullable();
+
+                // Location (barangay)
                 $table->unsignedInteger('location_id')->nullable();
+
+                // District (simple number, no FK!)
+                $table->unsignedTinyInteger('district_id')->nullable();
+
+                // Event Type
+                $table->unsignedInteger('event_type_id')->nullable();
+
+                // Datetime
                 $table->timestamp('start_datetime')->nullable();
                 $table->timestamp('end_datetime')->nullable();
-                $table->enum('status', ['planned','ongoing','completed','cancelled'])->default('planned');
+
+                $table->enum('status', ['planned','ongoing','completed','cancelled'])
+                    ->default('planned');
+
+                // Created by admin
                 $table->unsignedInteger('created_by')->nullable();
+
                 $table->timestamps();
 
-                $table->foreign('location_id')->references('location_id')->on('locations')->onDelete('set null');
-                $table->foreign('created_by')->references('admin_id')->on('admin_accounts')->onDelete('set null');
+                // Foreign keys
+                $table->foreign('location_id')
+                    ->references('location_id')
+                    ->on('locations')
+                    ->onDelete('set null');
+
+                $table->foreign('event_type_id')
+                    ->references('event_type_id')
+                    ->on('event_types')
+                    ->onDelete('set null');
+
+                $table->foreign('created_by')
+                    ->references('admin_id')
+                    ->on('admin_accounts')
+                    ->onDelete('set null');
             });
+
         }
     }
 

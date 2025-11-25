@@ -19,6 +19,8 @@ class Event extends Model
         'description',
         'venue',
         'location_id',
+        'district_id',
+        'event_type_id',
         'start_datetime',
         'end_datetime',
         'status',
@@ -27,54 +29,70 @@ class Event extends Model
 
     protected $casts = [
         'start_datetime' => 'datetime',
-        'end_datetime' => 'datetime',
+        'end_datetime'   => 'datetime',
     ];
 
-    // Relation: Event creator (admin)
+    /* ==========================================
+       RELATIONSHIPS
+    ========================================== */
+
+    // Event creator (admin)
     public function creator()
     {
         return $this->belongsTo(AdminAccount::class, 'created_by', 'admin_id');
     }
 
-    // Relation: Event attendances
+    // Event attendances
     public function attendances()
     {
         return $this->hasMany(EventAttendance::class, 'event_id', 'event_id');
     }
 
-    // Relation: Event feedbacks
+    // Event feedbacks
     public function feedbacks()
     {
         return $this->hasMany(EventFeedback::class, 'event_id', 'event_id');
     }
 
-    // Relation: Event logs
+    // Event logs
     public function logs()
     {
         return $this->hasMany(EventLog::class, 'event_id', 'event_id');
     }
 
-    // Relation: Attendance import logs
+    // Attendance import logs
     public function attendanceImports()
     {
         return $this->hasMany(AttendanceImportLog::class, 'event_id', 'event_id');
     }
 
-    // Relation: Event organizers
+    // Event organizers
     public function organizers()
     {
         return $this->hasMany(EventOrganizer::class, 'event_id', 'event_id');
     }
 
-    // Relation: Expected volunteers
+    // Expected volunteers
     public function expectedVolunteers()
     {
         return $this->hasMany(EventExpectedVolunteer::class, 'event_id', 'event_id');
     }
 
-    // Relation: Location
+    // Barangay (Location)
     public function location()
     {
         return $this->belongsTo(Location::class, 'location_id', 'location_id');
+    }
+
+    // District (also from locations table)
+    public function district()
+    {
+        return $this->belongsTo(Location::class, 'district_id', 'district_id');
+    }
+
+    // Event Type
+    public function eventType()
+    {
+        return $this->belongsTo(EventType::class, 'event_type_id', 'event_type_id');
     }
 }
