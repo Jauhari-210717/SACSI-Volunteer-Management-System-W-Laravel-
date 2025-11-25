@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\VolunteerProfile;
 use App\Models\Course;
 use App\Models\Location;
+use Illuminate\Support\Facades\Log;
 
 class VolunteerListController extends Controller
 {
@@ -13,7 +14,6 @@ class VolunteerListController extends Controller
     {
         $courses = Course::orderBy('course_name')->get()->map(function($c) {
 
-            // Abbreviation generator (BSIT, BSCS, BSAC, etc.)
             $majorWords = [
                 'Bachelor','Science','Arts','Education','Engineering',
                 'Technology','Accountancy','Business','Management',
@@ -42,15 +42,13 @@ class VolunteerListController extends Controller
             ->unique()
             ->sort()
             ->map(fn($id) => (object)[
-                'district_id'   => $id,
-                'district_name' => "District $id",
+                'district_id' => $id,
+                'district_name' => "District $id"
             ])
             ->values();
 
         return view('volunteer_list.volunteer_list', compact(
-            'courses',
-            'barangays',
-            'districts'
+            'courses', 'barangays', 'districts'
         ));
     }
 
@@ -104,6 +102,9 @@ class VolunteerListController extends Controller
 
     public function data(Request $request)
     {
+        Log::info("=== VOLUNTEER SEARCH DEBUG START ===");
+        Log::info("Incoming Query Params:", $request->query());
+
         $perPage    = (int) $request->query('per_page', 12);
         $searchRaw  = $request->query('search', '');
         $search     = strtolower(trim($searchRaw));
@@ -112,37 +113,61 @@ class VolunteerListController extends Controller
         $barangay   = $request->query('barangay');
         $district   = $request->query('district');
         $yearLevel  = $request->query('year_level');
-
-        $selectedDay   = $request->query('day');
+        $selectedDay = $request->query('day');
         $selectedBlock = $request->query('schedule_day');
 
-        $selectedRange = null;
+        /* ------------------------------
+           FIXED SCHEDULE PARSING
+        ------------------------------ */
+        $parsedRange = null;
         if ($selectedBlock) {
             $clean = str_ireplace([' AM',' PM'], '', $selectedBlock);
-            $selectedRange = $this->parseRangeStr($clean);
+            $parsedRange = $this->parseRangeStr($clean);
         }
 
+        Log::info("Parsed Filters:", [
+            "search" => $search,
+            "course_id" => $courseId,
+            "barangay" => $barangay,
+            "district" => $district,
+            "yearLevel" => $yearLevel,
+            "selectedDay" => $selectedDay,
+            "selectedBlock" => $selectedBlock
+        ]);
+
+        if ($parsedRange) {
+            Log::info("Parsed schedule range: ", $parsedRange);
+        }
+
+        /* ------------------------------
+           BASE QUERY
+        ------------------------------ */
         $query = VolunteerProfile::with('course')->select(
             'volunteer_id','full_name','course_id','year_level',
             'class_schedule','barangay','district',
             'profile_picture_url','profile_picture_path'
         );
 
-        /* --------------------------------------------------
-           SMART SEARCH — name, course, acronym, location
-        -------------------------------------------------- */
-        if (!empty($search)) {
-            $s = $search;
+        $scheduleMode = ($selectedDay || $selectedBlock) ? true : false;
 
-            $query->where(function($q) use ($s) {
+        /* ============================================================
+           SMART SEARCH — FIXED
+           (DISABLED WHEN DOING SCHEDULE-BASED SEARCH)
+        ============================================================ */
+        if (!$scheduleMode && !empty($search)) {
 
-                /* NAME */
-                $q->orWhereRaw("LOWER(full_name) LIKE ?", ["%{$s}%"]);
+            Log::info("Search activated for: $search");
 
-                /* BARANGAY */
-                $q->orWhereRaw("LOWER(barangay) LIKE ?", ["%{$s}%"]);
+            $query->where(function($q) use ($search) {
 
-                /* DISTRICT (1 or 2 only) */
+                $s = strtolower($search);
+                $like = "%{$s}%";
+
+                Log::info("Applying name search: $like");
+
+                $q->whereRaw("LOWER(full_name) LIKE ?", [$like])
+                  ->orWhereRaw("LOWER(barangay) LIKE ?", [$like]);
+
                 if (in_array($s, ['1','district 1','d1'])) {
                     $q->orWhere('district', 1);
                 }
@@ -150,75 +175,82 @@ class VolunteerListController extends Controller
                     $q->orWhere('district', 2);
                 }
 
-                /* COURSE FULL NAME */
-                $q->orWhereHas('course', function($qc) use ($s) {
-                    $qc->whereRaw("LOWER(course_name) LIKE ?", ["%{$s}%"]);
+                Log::info("Applying course name search: $like");
+                $q->orWhereHas('course', function($qc) use ($like) {
+                    $qc->whereRaw("LOWER(course_name) LIKE ?", [$like]);
                 });
 
-                /* COURSE ACRONYM (BSIT/BSCS/etc) */
+                /* ------------------------------
+                   FIXED ACRONYM MATCH
+                ------------------------------ */
                 $q->orWhereHas('course', function($qc) use ($s) {
 
-                    static $abbrCache = null;
+                    static $abbr = null;
 
-                    if ($abbrCache === null) {
-                        $abbrCache = Course::all()->map(function ($c) {
-
-                            $majors = [
+                    if ($abbr === null) {
+                        $abbr = Course::all()->map(function ($c) {
+                            $majorWords = [
                                 'Bachelor','Science','Arts','Education','Engineering',
                                 'Technology','Accountancy','Business','Management',
                                 'Communication','Media','New','Computer'
                             ];
-
-                            $abbr = '';
+                            $ac = '';
                             foreach (explode(' ', $c->course_name) as $w) {
-                                if (in_array($w, $majors)) {
-                                    $abbr .= strtoupper($w[0]);
+                                if (in_array($w, $majorWords)) {
+                                    $ac .= strtolower($w[0]);
                                 }
                             }
-
-                            return (object)[
-                                'id'   => $c->course_id,
-                                'abbr' => strtolower($abbr)
-                            ];
+                            return (object)[ 'id' => $c->course_id, 'abbr' => $ac ];
                         });
                     }
 
-                    $matched = $abbrCache
-                        ->filter(fn($c) => str_contains($c->abbr, $s))
+                    $matched = $abbr
+                        ->filter(fn($c) => str_starts_with($c->abbr, $s))
                         ->pluck('id');
 
+                    Log::info("Acronym match:", [
+                        "search" => $s,
+                        "matchedIDs" => $matched->toArray()
+                    ]);
+
                     if ($matched->isNotEmpty()) {
-                        $qc->whereIn('course_id', $matched);  // FIXED ✔
+                        $qc->whereIn('course_id', $matched);
+                    } else {
+                        $qc->whereRaw("0=1");
                     }
                 });
-
             });
         }
 
-        /* --------------------------------------------------
-           FILTERS (fixed to ignore empty/remove)
-        -------------------------------------------------- */
-        if ($courseId !== null && $courseId !== '' && $courseId !== 'remove') {
-            $query->where('course_id', $courseId);
-        }
-        if ($barangay !== null && $barangay !== '' && $barangay !== 'remove') {
-            $query->where('barangay', $barangay);
-        }
-        if ($district !== null && $district !== '' && $district !== 'remove') {
-            $query->where('district', $district);
-        }
-        if ($yearLevel !== null && $yearLevel !== '' && $yearLevel !== 'remove') {
-            $query->where('year_level', $yearLevel);
-        }
+        /* ------------------------------
+           FIELD FILTERS
+        ------------------------------ */
+        if ($courseId && $courseId !== 'remove') $query->where('course_id', $courseId);
+        if ($barangay && $barangay !== 'remove') $query->where('barangay', $barangay);
+        if ($district && $district !== 'remove') $query->where('district', $district);
+        if ($yearLevel && $yearLevel !== 'remove') $query->where('year_level', $yearLevel);
 
-        /* Manual schedule availability filtering */
+        /* ------------------------------
+           LOG RAW SQL
+        ------------------------------ */
+        Log::info("SQL BEFORE EXECUTION:");
+        Log::info($query->toSql());
+        Log::info("SQL Bindings:", $query->getBindings());
+
         $items = $query->get();
+        Log::info("Fetched items count: " . $items->count());
 
-        if ($selectedDay && $selectedRange) {
-            $items = $items->filter(function ($v) use ($selectedDay, $selectedRange) {
+        /* ============================================================
+           FIXED SCHEDULE FILTERING (NOW WORKS AGAIN!)
+        ============================================================ */
+        if ($selectedDay && $parsedRange) {
+            Log::info("Applying schedule availability filter...");
+
+            $items = $items->filter(function ($v) use ($selectedDay, $parsedRange) {
                 $blocks = $this->extractScheduleByDay($v->class_schedule);
+
                 foreach ($blocks[$selectedDay] ?? [] as $block) {
-                    if ($this->overlaps($selectedRange, $block)) {
+                    if ($this->overlaps($parsedRange, $block)) {
                         return false;
                     }
                 }
@@ -226,14 +258,17 @@ class VolunteerListController extends Controller
             });
         }
 
-        /* Pagination */
+        Log::info("Final items after schedule filtering: " . $items->count());
+        Log::info("=== VOLUNTEER SEARCH DEBUG END ===");
+
+        /* ------------------------------
+           PAGINATION
+        ------------------------------ */
         $total = $items->count();
         $currentPage = max(1, (int)$request->page);
         $lastPage = max(1, (int)ceil($total / $perPage));
 
-        $results = $items
-            ->slice(($currentPage - 1) * $perPage, $perPage)
-            ->values();
+        $results = $items->slice(($currentPage - 1) * $perPage, $perPage)->values();
 
         return response()->json([
             'data' => $results->map(function ($item) {
