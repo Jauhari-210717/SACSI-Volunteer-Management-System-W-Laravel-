@@ -55,10 +55,11 @@ class VolunteerProfileSeeder extends Seeder
             dd("⚠ No courses found. Seed your courses first.");
         }
 
-        for ($i=1; $i<=50; $i++) {
+        for ($i = 1; $i <= 50; $i++) {
 
             VolunteerProfile::create([
-                'volunteer_id' => strtoupper(Str::random(8)),
+                // ❌ volunteer_id removed (auto-increment)
+                
                 'full_name' => fake()->name(),
 
                 'course_id' => fake()->randomElement($courses),
